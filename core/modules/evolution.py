@@ -1,8 +1,19 @@
+"""
+Evolution Engine - Dynamic Tool Synthesis and Validation
+PURPOSE: Allow the agent to create and register new Python tools.
+CONTRACT:
+- validate_and_register(name, code, schema): Sanitizes, tests, and registers a tool.
+- get_tool_descriptions(): Returns a summary of all active tools.
+"""
+
 import json
 import ast
 import subprocess
-from typing import Dict, Any
+import logging
+from typing import Dict, Any, List, Optional
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class EvolutionEngine:
@@ -15,7 +26,7 @@ class EvolutionEngine:
         self, name: str, code: str, schema_json: str
     ) -> Dict[str, Any]:
         """
-        Automated Validation Criteria (Gatekeeper).
+        Validate syntax, security, and runtime of a new tool.
         """
         try:
             # 1. Syntax Pass
@@ -34,10 +45,7 @@ class EvolutionEngine:
             for node in ast.walk(root):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
-                        if alias.name in [
-                            "shutil",
-                            "subprocess",
-                        ]:  # Allow os for path joining etc
+                        if alias.name in ["shutil", "subprocess"]:
                             return {
                                 "success": False,
                                 "error": f"Illegal import detected: {alias.name}",
@@ -49,12 +57,15 @@ class EvolutionEngine:
                             "error": f"Illegal import detected: {node.module}",
                         }
 
-            # 4. Save and Setup with UV
+            # 4. Persistence
             tool_dir = self.tools_dir / name
             tool_dir.mkdir(parents=True, exist_ok=True)
 
-            # Initialize uv project
-            subprocess.run(["uv", "init", "--lib"], cwd=tool_dir, capture_output=True)
+            # Initialize uv project (if not exists)
+            if not (tool_dir / "pyproject.toml").exists():
+                subprocess.run(
+                    ["uv", "init", "--lib"], cwd=tool_dir, capture_output=True
+                )
 
             tool_path = tool_dir / "src" / f"{name}.py"
             schema_path = tool_dir / f"{name}.json"
@@ -64,8 +75,7 @@ class EvolutionEngine:
             with open(schema_path, "w", encoding="utf-8") as f:
                 f.write(schema_json)
 
-            # 5. I/O Dry-Run using uv run
-            # We'll just check if it imports for now
+            # 5. Runtime Verification
             verify_cmd = (
                 f"import sys; sys.path.append('src'); import {name}; print('OK')"
             )
@@ -82,7 +92,7 @@ class EvolutionEngine:
                     "error": f"Tool dry-run failed: {result.stderr}",
                 }
 
-            # Register
+            # 6. Registration
             self.registered_tools[name] = {"path": str(tool_path), "schema": schema}
 
             return {
@@ -91,6 +101,7 @@ class EvolutionEngine:
             }
 
         except Exception as e:
+            logger.error(f"Evolution Failure: {e}")
             return {"success": False, "error": f"Validation failed: {str(e)}"}
 
     def get_tool_descriptions(self) -> str:

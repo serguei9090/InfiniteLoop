@@ -41,18 +41,20 @@ DEFAULT_WORKSPACE = PROJECT_ROOT  # In ADK mode, the orchestrator handles the 'w
 
 
 class InfiniteOrchestrator:
-    def __init__(self, workspace_root: str = None):
+    def __init__(self, workspace_root: str = None, target_workspace: str = "workspace"):
         if workspace_root is None:
             workspace_root = str(PROJECT_ROOT)
         self.workspace_root = Path(workspace_root).resolve()
-        self.brain = ADKOrchestrator(workspace_root=str(self.workspace_root))
+        self.brain = ADKOrchestrator(workspace_root=str(self.workspace_root), target_workspace=target_workspace)
 
-    async def run_autoevolve(self, mission: str = None):
-        """Primary loop for self-evolution via ADK."""
-        title = f"EVOLVE: {mission}" if mission else "EVOLVE: Standard Maintenance"
+    async def run_evolve(self, mission: str = None):
+        """Primary loop for evolution via ADK."""
+        mode = "SELF-EVOLUTION" if self.brain.workspace_dir_name == "workspace" else f"APP-BUILDING: {self.brain.workspace_dir_name}"
+        title = f"EVOLVE [{mode}]: {mission}" if mission else f"EVOLVE [{mode}]: Standard Maintenance"
+        
         console.print(
             Panel(
-                f"[bold green]STARTING ADK EVOLUTION LOOP[/bold green]\nTarget: {self.workspace_root}",
+                f"[bold green]STARTING ADK EVOLUTION LOOP[/bold green]\nTarget Workspace: [cyan]{self.brain.workspace_root}[/cyan]",
                 title=title,
                 border_style="green",
             )
@@ -70,7 +72,7 @@ class InfiniteOrchestrator:
 
 @click.group()
 @click.option(
-    "--workspace", default=str(DEFAULT_WORKSPACE), help="Path to workspace root"
+    "--workspace", default=str(DEFAULT_WORKSPACE), help="Path to project root"
 )
 @click.option(
     "--debug", is_flag=True, default=True, help="Enable verbose debug logging"
@@ -87,17 +89,27 @@ def main(ctx, workspace, debug):
             pass  # Fallback for non-standard streams
 
     setup_logging(debug)
-    ctx.obj = InfiniteOrchestrator(workspace)
+    # We delay orchestrator creation to the command level to handle flags
+    ctx.ensure_object(dict)
+    ctx.obj['workspace_root'] = workspace
 
 
 @main.command()
 @click.option(
     "--mission", default=None, help="Specific directive for the evolution cycle"
 )
-@click.pass_obj
-def autoevolve(orchestrator, mission):
-    """Launch the self-evolution loop for the IMMUTABLE CORE app."""
-    asyncio.run(orchestrator.run_autoevolve(mission))
+@click.option(
+    "--self", "is_self", is_flag=True, default=False, help="Target the core 'workspace' for self-evolution"
+)
+@click.option(
+    "--app", default="main_app", help="Target app in 'UserWorkspace/' (ignored if --self is set)"
+)
+@click.pass_context
+def evolve(ctx, mission, is_self, app):
+    """Launch the evolution loop for the IMMUTABLE CORE app or a user application."""
+    target = "workspace" if is_self else f"UserWorkspace/{app}"
+    orchestrator = InfiniteOrchestrator(ctx.obj['workspace_root'], target_workspace=target)
+    asyncio.run(orchestrator.run_evolve(mission))
 
 
 @main.command()

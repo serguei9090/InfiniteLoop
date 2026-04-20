@@ -4,56 +4,56 @@ from modules.sandbox import WorkspaceGuard
 
 
 @pytest.fixture
-def sandbox():
-    # Use a test workspace relative to current
-    test_path = Path("test_workspace")
-    test_path.mkdir(exist_ok=True)
-    return WorkspaceGuard(str(test_path.absolute()))
+def sandbox(tmp_path):
+    """Provides a WorkspaceGuard jailed to a temporary directory."""
+    return WorkspaceGuard(str(tmp_path.absolute()))
 
 
 def test_sandbox_resolve_safe(sandbox):
-    # READ should be safe anywhere
+    """READ should be safe within the root."""
     path = sandbox.secure_path("test.txt", write=False)
-    assert "test_workspace" in str(path)
+    assert sandbox.root in path.parents
     assert path.name == "test.txt"
 
 
-def test_sandbox_resolve_apps_write(sandbox):
-    # WRITE should be safe in Apps
-    path = sandbox.secure_path("Apps/test.txt", write=True)
-    assert "Apps" in str(path)
+def test_sandbox_write_safe(sandbox):
+    """WRITE should be safe within the root."""
+    path = sandbox.secure_path("subfolder/test.py", write=True)
+    assert sandbox.root in path.parents
+    assert "subfolder" in str(path)
 
 
 def test_sandbox_traversal_attack(sandbox):
-    with pytest.raises(PermissionError):
+    """Verify that traversal above root is blocked."""
+    with pytest.raises(PermissionError, match="Security Alert: Path traversal detected"):
         sandbox.secure_path("../secret.txt")
 
 
 def test_sandbox_absolute_path_attack(sandbox):
-    # Depending on OS, this might vary, but should always fail
+    """Verify that absolute paths outside root are blocked."""
+    # This might behave differently depending on how pathlib handles it,
+    # but WorkspaceGuard should block it.
     with pytest.raises(PermissionError):
         sandbox.secure_path("/etc/passwd")
 
 
 def test_delete_routing_to_trash(sandbox):
-    # Setup a file in Apps
-    apps_file = sandbox.apps / "test_delete.txt"
-    apps_file.touch()
+    """Verify that delete moves files to the .trash folder within root."""
+    # Setup a file
+    test_file = sandbox.root / "to_delete.txt"
+    test_file.touch()
 
     # Delete it
-    sandbox.safe_delete("Apps/test_delete.txt")
+    sandbox.safe_delete("to_delete.txt")
 
-    trash_path = sandbox.trash / "test_delete.txt"
-    assert not apps_file.exists()
+    trash_path = sandbox.root / ".trash" / "to_delete.txt"
+    assert not test_file.exists()
     assert trash_path.exists()
 
 
-def test_sandbox_apps_isolation(sandbox):
-    # Should be able to resolve/write inside Apps
-    apps_path = sandbox.secure_path("Apps/my_app.py", write=True)
-    assert "Apps" in str(apps_path)
-
-    # Should NOT be able to write outside Apps
-    with pytest.raises(PermissionError) as excinfo:
-        sandbox.secure_path("core/main.py", write=True)
-    assert "WRITE BLOCKED" in str(excinfo.value)
+def test_sandbox_core_isolation(sandbox):
+    """Verify that writing outside the root (e.g. to core/) is blocked."""
+    # In WorkspaceGuard, any path passed is relative to root.
+    # So if we try to 'escape' via ../core/main.py, it should fail.
+    with pytest.raises(PermissionError, match="Security Alert"):
+        sandbox.secure_path("../core/main.py", write=True)

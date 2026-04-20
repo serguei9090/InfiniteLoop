@@ -251,57 +251,21 @@ async def register_tool(request: ToolRequest):
 
 
 @app.post("/api/tools/hot-load")
-async def hot_load_tool(name: str):
+async def hot_load_tool(name: str, category: str = "backend"):
     """Hot-load a tool without restarting."""
     try:
-        result = await orchestrator.hot_load_tool(name)
+        result = await orchestrator.hot_load_tool(name, category)
         return {"success": True, "data": result, "error": None}
     except Exception as e:
         return {"success": False, "data": None, "error": str(e)}
 
 
 @app.delete("/api/tools/remove")
-async def remove_tool(name: str):
+async def remove_tool(name: str, category: str = "backend"):
     """Remove a tool."""
     try:
-        result = await orchestrator.remove_tool(name)
+        result = await orchestrator.remove_tool(name, category)
         return {"success": True, "data": result, "error": None}
-    except Exception as e:
-        return {"success": False, "data": None, "error": str(e)}
-
-
-# ==================== AGENT INSTRUCTIONS ====================
-
-
-@app.post("/api/instructions/load")
-async def load_instructions(request: InstructionsRequest):
-    """Load agent instructions."""
-    try:
-        await orchestrator.load_agent_instructions(request.instructions)
-        return {
-            "success": True,
-            "data": {
-                "message": f"Loaded {len(request.instructions)} agent instructions",
-                "count": len(request.instructions),
-            },
-            "error": None,
-        }
-    except Exception as e:
-        return {"success": False, "data": None, "error": str(e)}
-
-
-@app.get("/api/instructions")
-async def get_instructions():
-    """Get loaded agent instructions."""
-    try:
-        return {
-            "success": True,
-            "data": {
-                "instructions": orchestrator.agent_instructions,
-                "count": len(orchestrator.agent_instructions),
-            },
-            "error": None,
-        }
     except Exception as e:
         return {"success": False, "data": None, "error": str(e)}
 
@@ -323,7 +287,7 @@ async def run_self_improvement():
 async def get_adaptation_stats():
     """Get auto-adaptation statistics."""
     try:
-        stats = orchestrator.auto_adaptation.get_adaptation_stats()
+        stats = await orchestrator.get_adaptation_stats()
         return {"success": True, "data": stats, "error": None}
     except Exception as e:
         return {"success": False, "data": None, "error": str(e)}
@@ -333,7 +297,7 @@ async def get_adaptation_stats():
 async def list_modules():
     """List all loaded modules."""
     try:
-        modules = orchestrator.auto_adaptation.get_all_modules()
+        modules = await orchestrator.list_adaptation_modules()
         return {"success": True, "data": {"modules": modules}, "error": None}
     except Exception as e:
         return {"success": False, "data": None, "error": str(e)}
@@ -343,7 +307,7 @@ async def list_modules():
 async def test_module(name: str, category: str):
     """Test a specific module."""
     try:
-        result = await orchestrator.auto_adaptation.test_module(name, category)
+        result = await orchestrator.test_adaptation_module(name, category)
         return {"success": True, "data": result, "error": None}
     except Exception as e:
         return {"success": False, "data": None, "error": str(e)}

@@ -1,3 +1,12 @@
+"""
+Base Tools - Immutable Core Filesystem and Command Execution
+PURPOSE: Provide safe, audited access to the workspace and system.
+CONTRACT:
+- read_file(path, mode): Returns skeleton, compressed, or full content.
+- write_file(path, content): Securely writes to the workspace.
+- execute_cmd(command): Runs shell commands within the sandbox.
+"""
+
 import platform
 import asyncio
 import os
@@ -5,17 +14,12 @@ import logging
 from modules.sandbox import WorkspaceGuard
 from modules.context import ContextEngine
 from modules.evolution import EvolutionEngine
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class BaseTools:
-    """
-    Standard toolset for the IMMUTABLE CORE environment.
-    Provides safe filesystem and system command execution.
-    Compatible with Google ADK 2.0 (supports async).
-    """
-
     def __init__(
         self,
         guard: WorkspaceGuard,
@@ -26,17 +30,9 @@ class BaseTools:
         self.context = context_engine
         self.evolution = evolution_engine
 
-    async def create_new_tool(self, name: str, code: str, schema: str) -> dict:
+    async def create_new_tool(self, name: str, code: str, schema: str) -> Dict:
         """
         Creates and registers a new dynamic tool.
-
-        Args:
-            name: Unique name for the tool.
-            code: Python code implementation.
-            schema: JSON schema string for the tool's arguments.
-
-        Returns:
-            A dict with 'success', 'data', and 'error' keys.
         """
         try:
             result = self.evolution.validate_and_register(name, code, schema)
@@ -48,21 +44,20 @@ class BaseTools:
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    async def read_file(self, path: str, mode: str = "skeleton") -> dict:
+    async def read_file(self, path: str, mode: str = "skeleton") -> Dict:
         """
         Reads content from a file in the workspace.
 
         Args:
             path: Relative path to the file.
-            mode: 'skeleton' for high-level structure, 'full' for exact code.
-
-        Returns:
-            A dict with 'success', 'data', and 'error' keys.
+            mode: 'skeleton' (headers), 'compressed' (no comments/docstrings), 'full' (raw).
         """
         try:
             safe_path = self.guard.secure_path(path, write=False)
             if mode == "skeleton":
                 content = self.context.get_skeleton(safe_path)
+            elif mode == "compressed":
+                content = self.context.get_full_compressed(safe_path)
             else:
                 content = await asyncio.to_thread(self._read_sync, safe_path)
             return {"success": True, "data": content, "error": None}
@@ -73,19 +68,16 @@ class BaseTools:
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
-    async def write_file(self, path: str, content: str) -> dict:
+    async def write_file(self, path: str, content: str) -> Dict:
         """
         Writes content to a file in the workspace.
 
         Args:
             path: Relative path to the file.
             content: The string content to write.
-
-        Returns:
-            A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            print(f"DEBUG: write_file called with {path}")
+            logger.debug(f"DEBUG: write_file called with {path}")
             safe_path = self.guard.secure_path(path, write=True)
             # Ensure parent directories exist
             await asyncio.to_thread(os.makedirs, safe_path.parent, exist_ok=True)
@@ -103,18 +95,11 @@ class BaseTools:
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
 
-    async def delete_file(self, path: str) -> dict:
+    async def delete_file(self, path: str) -> Dict:
         """
         Moves a file to the system's .trash folder.
-
-        Args:
-            path: Relative path to the file.
-
-        Returns:
-            A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            # We use the existing guard method for now
             self.guard.safe_delete(path)
             return {
                 "success": True,
@@ -124,18 +109,12 @@ class BaseTools:
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    async def create_folder(self, path: str) -> dict:
+    async def create_folder(self, path: str) -> Dict:
         """
         Creates a new folder in the workspace.
-
-        Args:
-            path: Relative path to the folder.
-
-        Returns:
-            A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            print(f"DEBUG: create_folder called with {path}")
+            logger.debug(f"DEBUG: create_folder called with {path}")
             safe_path = self.guard.secure_path(path, write=True)
             await asyncio.to_thread(os.makedirs, safe_path, exist_ok=True)
             return {
@@ -146,15 +125,9 @@ class BaseTools:
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    async def execute_cmd(self, command: str) -> dict:
+    async def execute_cmd(self, command: str) -> Dict:
         """
         Executes a shell command in the workspace root.
-
-        Args:
-            command: The exact shell command to run.
-
-        Returns:
-            A dict with 'success', 'data' (stdout), and 'error' (stderr).
         """
         try:
             destructive_patterns = ["rm ", "del ", "Remove-Item", "rd ", "rmdir"]
@@ -166,7 +139,6 @@ class BaseTools:
                 }
 
             if platform.system() == "Windows":
-                # Ensure powershell usage
                 full_command = f'powershell.exe -Command "{command}"'
             else:
                 full_command = command
