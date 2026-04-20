@@ -1,15 +1,21 @@
 import subprocess
 import platform
-from typing import Dict, Any, Optional
+import asyncio
+import os
+import shutil
+import logging
+from typing import Dict, Any, Optional, List
 from modules.sandbox import WorkspaceGuard
 from modules.context import ContextEngine
 from modules.evolution import EvolutionEngine
 
+logger = logging.getLogger(__name__)
 
 class BaseTools:
     """
     Standard toolset for the IMMUTABLE CORE environment.
     Provides safe filesystem and system command execution.
+    Compatible with Google ADK 2.0 (supports async).
     """
     def __init__(
         self,
@@ -21,7 +27,7 @@ class BaseTools:
         self.context = context_engine
         self.evolution = evolution_engine
 
-    def create_new_tool(self, name: str, code: str, schema: str) -> dict:
+    async def create_new_tool(self, name: str, code: str, schema: str) -> dict:
         """
         Creates and registers a new dynamic tool.
 
@@ -43,7 +49,7 @@ class BaseTools:
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    def read_file(self, path: str, mode: str = "skeleton") -> dict:
+    async def read_file(self, path: str, mode: str = "skeleton") -> dict:
         """
         Reads content from a file in the workspace.
 
@@ -55,17 +61,20 @@ class BaseTools:
             A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            safe_path = self.guard.secure_path(path)
+            safe_path = self.guard.secure_path(path, write=False)
             if mode == "skeleton":
                 content = self.context.get_skeleton(safe_path)
             else:
-                with open(safe_path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                content = await asyncio.to_thread(self._read_sync, safe_path)
             return {"success": True, "data": content, "error": None}
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    def write_file(self, path: str, content: str) -> dict:
+    def _read_sync(self, path):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    async def write_file(self, path: str, content: str) -> dict:
         """
         Writes content to a file in the workspace.
 
@@ -77,16 +86,21 @@ class BaseTools:
             A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            safe_path = self.guard.secure_path(path)
+            print(f"DEBUG: write_file called with {path}")
+            safe_path = self.guard.secure_path(path, write=True)
             # Ensure parent directories exist
-            safe_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(safe_path, "w", encoding="utf-8") as f:
-                f.write(content)
+            await asyncio.to_thread(os.makedirs, safe_path.parent, exist_ok=True)
+            await asyncio.to_thread(self._write_sync, safe_path, content)
             return {"success": True, "data": f"Successfully wrote to {path}", "error": None}
         except Exception as e:
+            logger.error(f"Write Error: {e}")
             return {"success": False, "data": "", "error": str(e)}
 
-    def delete_file(self, path: str) -> dict:
+    def _write_sync(self, path, content):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    async def delete_file(self, path: str) -> dict:
         """
         Moves a file to the system's .trash folder.
 
@@ -97,12 +111,13 @@ class BaseTools:
             A dict with 'success', 'data', and 'error' keys.
         """
         try:
+            # We use the existing guard method for now
             self.guard.safe_delete(path)
             return {"success": True, "data": f"Successfully moved {path} to .trash", "error": None}
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    def create_folder(self, path: str) -> dict:
+    async def create_folder(self, path: str) -> dict:
         """
         Creates a new folder in the workspace.
 
@@ -113,13 +128,14 @@ class BaseTools:
             A dict with 'success', 'data', and 'error' keys.
         """
         try:
-            safe_path = self.guard.secure_path(path)
-            safe_path.mkdir(parents=True, exist_ok=True)
+            print(f"DEBUG: create_folder called with {path}")
+            safe_path = self.guard.secure_path(path, write=True)
+            await asyncio.to_thread(os.makedirs, safe_path, exist_ok=True)
             return {"success": True, "data": f"Successfully created folder {path}", "error": None}
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
-    def execute_cmd(self, command: str) -> dict:
+    async def execute_cmd(self, command: str) -> dict:
         """
         Executes a shell command in the workspace root.
 
@@ -139,24 +155,24 @@ class BaseTools:
                 }
 
             if platform.system() == "Windows":
+                # Ensure powershell usage
                 full_command = f"powershell.exe -Command \"{command}\""
             else:
                 full_command = command
 
-            process = subprocess.run(
+            process = await asyncio.create_subprocess_shell(
                 full_command,
-                shell=True,
-                cwd=self.guard.apps,
-                capture_output=True,
-                text=True,
-                timeout=30,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=self.guard.root
             )
-            data = process.stdout
-            error = process.stderr if process.returncode != 0 else None
+            stdout, stderr = await process.communicate()
+            
+            success = process.returncode == 0
             return {
-                "success": process.returncode == 0,
-                "data": data,
-                "error": error or (f"Exit code: {process.returncode}" if process.returncode != 0 else None)
+                "success": success,
+                "data": stdout.decode(),
+                "error": stderr.decode() if not success else ""
             }
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}

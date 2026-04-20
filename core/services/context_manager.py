@@ -40,10 +40,11 @@ class ContextManager:
         token_estimate = total_chars // 4
 
         if token_estimate > (self.max_tokens * 0.9):
-            # Keep system message (index 0 usually)
-            if len(self.history) > 2:
-                # Remove eldest pair after system message
-                del self.history[1]
+            # Keep system message (0) and Initial Mission (1)
+            if len(self.history) > 3:
+                # Remove eldest interaction (usually an assistant/user pair)
+                # Starting at index 2 to preserve the root mission
+                del self.history[2]
                 self._compress_if_needed()  # Recurse if still too big
 
     def get_messages(self) -> List[Dict[str, Any]]:
@@ -68,3 +69,7 @@ class ContextManager:
             "message_count": len(self.history),
             "max_tokens": self.max_tokens,
         }
+
+    def reset(self):
+        """Reset the conversation history."""
+        self.history = []

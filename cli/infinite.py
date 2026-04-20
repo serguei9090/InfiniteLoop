@@ -13,7 +13,8 @@ from rich.panel import Panel
 # Add parent directory to path for core imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 
-from modules.adk_agent import ADKOrchestrator
+from services.loop_orchestrator import LoopOrchestrator
+from services.llm_bridge import LLMBridge
 
 import logging
 from rich.logging import RichHandler
@@ -33,23 +34,29 @@ def setup_logging(debug: bool = False):
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("websockets").setLevel(logging.WARNING)
 
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+DEFAULT_WORKSPACE = (PROJECT_ROOT / "workspace").resolve()
+
 class InfiniteOrchestrator:
-    def __init__(self, workspace_root: str = "../workspace"):
+    def __init__(self, workspace_root: str = None):
+        if workspace_root is None:
+            workspace_root = str(DEFAULT_WORKSPACE)
         self.workspace_root = Path(workspace_root).resolve()
-        self.brain = ADKOrchestrator(str(self.workspace_root))
-    
+        self.llm = LLMBridge()
+        self.brain = LoopOrchestrator(self.llm, workspace_root=str(self.workspace_root))
+
     async def run_autoevolve(self, mission: str = None):
         """Primary loop for self-evolution."""
         title = f"EVOLVE: {mission}" if mission else "EVOLVE: Standard Maintenance"
         console.print(Panel(f"[bold green]STARTING AUTO-EVOLUTION LOOP[/bold green]\nTarget: Current Workspace", title=title, border_style="green"))
-        await self.brain.initialize()
-        # Trigger the mission logic from ADK orchestrator
-        result = await self.brain.start_mission(mission)
+        
+        # Trigger the mission logic from Loop orchestrator
+        await self.brain.start_task(mission)
         console.print(f"[bold cyan]Mission cycle complete.[/bold cyan]")
 
 @click.group()
-@click.option("--workspace", default="../workspace", help="Path to workspace root")
-@click.option("--debug", is_flag=True, help="Enable verbose debug logging")
+@click.option("--workspace", default=str(DEFAULT_WORKSPACE), help="Path to workspace root")
+@click.option("--debug", is_flag=True, default=True, help="Enable verbose debug logging")
 @click.pass_context
 def main(ctx, workspace, debug):
     """IMMUTABLE CORE CLI - Autonomous Intelligence Orchestrator"""

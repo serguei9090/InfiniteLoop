@@ -17,34 +17,33 @@ class ToolEngine:
         Parses and executes a tool call.
         """
         try:
-            # Enhanced JSON extraction
+            # Try to find all JSON-like blocks and take the first valid one
             import re
-            json_match = re.search(r"(\{.*\})", tool_call_json, re.DOTALL)
-            if json_match:
-                clean_json = json_match.group(1)
+            json_blocks = re.findall(r"```json\s*(\{.*?\})\s*```", tool_call_json, re.DOTALL)
+            if not json_blocks:
+                json_blocks = re.findall(r"(\{.*?\})", tool_call_json, re.DOTALL)
+            
+            if json_blocks:
+                clean_json = json_blocks[0]
             else:
                 clean_json = tool_call_json.strip()
-                if clean_json.startswith("```json"):
-                    clean_json = clean_json.split("```json", 1)[1].rsplit("```", 1)[0].strip()
-                elif clean_json.startswith("```"):
-                    clean_json = clean_json.split("```", 1)[1].rsplit("```", 1)[0].strip()
 
-            data = json.loads(clean_json)
+            data = json.loads(clean_json, strict=False)
             tool_name = data.get("tool")
             args = data.get("args", {})
 
             if tool_name == "read_file":
-                return self.tools.read_file(**args).to_dict()
+                return await self.tools.read_file(**args)
             elif tool_name == "write_file":
-                return self.tools.write_file(**args).to_dict()
+                return await self.tools.write_file(**args)
             elif tool_name == "execute_cmd":
-                return self.tools.execute_cmd(**args).to_dict()
+                return await self.tools.execute_cmd(**args)
             elif tool_name == "delete_file":
-                return self.tools.delete_file(**args).to_dict()
+                return await self.tools.delete_file(**args)
             elif tool_name == "create_folder":
-                return self.tools.create_folder(**args).to_dict()
+                return await self.tools.create_folder(**args)
             elif tool_name == "create_new_tool":
-                return self.tools.create_new_tool(**args).to_dict()
+                return await self.tools.create_new_tool(**args)
 
             # Check for dynamic tools
             elif tool_name in self.tools.evolution.registered_tools:

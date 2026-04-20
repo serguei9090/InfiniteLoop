@@ -21,7 +21,7 @@ class LLMBridge:
         """
         try:
             kwargs = {
-                "model": "local-model",
+                "model": "qwen/qwen3.5-9b",
                 "messages": messages,
                 "temperature": temperature,
                 "stream": True,
@@ -32,8 +32,9 @@ class LLMBridge:
 
             stream = await self.client.chat.completions.create(**kwargs)
             async for chunk in stream:
-                delta = chunk.choices[0].delta
-                yield delta.model_dump()
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    yield delta.model_dump()
         except Exception as e:
             yield {"content": f"Error in LLM Bridge: {str(e)}"}
 
@@ -49,7 +50,7 @@ class LLMBridge:
         """
         try:
             kwargs = {
-                "model": "local-model",
+                "model": "qwen/qwen3.5-9b",
                 "messages": messages,
                 "temperature": temperature,
                 "stream": False,

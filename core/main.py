@@ -11,6 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from services.llm_bridge import LLMBridge
 import logging
+import importlib.util
+import sys
 
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
@@ -59,6 +61,38 @@ app.add_middleware(
 
 if UI_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(UI_DIR)), name="static")
+
+# ==================== DYNAMIC APP DISCOVERY ====================
+
+def discover_plugins():
+    """Scan workspace/ for router.py files and include them."""
+    project_root = BASE_DIR.parent.resolve()
+    workspace_path = project_root / "workspace"
+    
+    if not workspace_path.exists():
+        logger.warning(f"⚠️ Workspace path does not exist: {workspace_path}")
+        return
+
+    sys.path.insert(0, str(workspace_path))
+        
+    for item in workspace_path.iterdir():
+        if item.is_dir():
+            router_file = item / "router.py"
+            if router_file.exists():
+                try:
+                    module_name = f"workspace.{item.name}.router"
+                    spec = importlib.util.spec_from_file_location(module_name, router_file)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    
+                    if hasattr(module, "router"):
+                        logger.info(f"🔌 [PLUGIN] Including router from workspace/{item.name}")
+                        # Include with prefix or use the router's own prefix
+                        app.include_router(module.router)
+                except Exception as e:
+                    logger.error(f"❌ [PLUGIN] Failed to load workspace/{item.name}: {e}")
+
+discover_plugins()
 
 
 # ==================== ORCHESTRATOR BRAIN ====================

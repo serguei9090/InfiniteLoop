@@ -7,19 +7,17 @@ class WorkspaceGuard:
     def __init__(self, workspace_root: str):
         self.root = Path(workspace_root).resolve()
         self.trash = self.root / ".trash"
-        self.apps = self.root / "Apps"
         self._ensure_dirs()
 
     def _ensure_dirs(self):
         self.root.mkdir(parents=True, exist_ok=True)
         self.trash.mkdir(parents=True, exist_ok=True)
-        self.apps.mkdir(parents=True, exist_ok=True)
 
     def secure_path(self, relative_path: Union[str, Path], write: bool = True) -> Path:
         """
         Resolves a path relative to workspace root and ensures it's within bounds.
         Throws PermissionError if path escapes root.
-        If write=True, enforces that changes must be in Apps/ or .trash/.
+        Write access is allowed everywhere within the workspace root.
         """
         # Handle potential absolute paths coming from the runner
         path_obj = Path(relative_path)
@@ -31,25 +29,13 @@ class WorkspaceGuard:
 
         requested_path = (self.root / relative_path).resolve()
 
-        # Security check 1: Path traversal detection
+        # Security check 2: Path bounds verification
         if not str(requested_path).startswith(str(self.root)):
             raise PermissionError(
-                f"Security Alert: Path traversal detected! {relative_path} escapes root."
+                f"Security Alert: Path traversal detected or out of bounds! {relative_path}"
             )
 
-        # Security check 2: Write Isolation Principle
-        if write:
-            # Allow writes ONLY to Apps/ or .trash/
-            is_in_apps = str(requested_path).startswith(str(self.apps))
-            is_in_trash = str(requested_path).startswith(str(self.trash))
-
-            if not (is_in_apps or is_in_trash):
-                raise PermissionError(
-                    f"Security Alert: WRITE BLOCKED. The root project is READ-ONLY. "
-                    f"You must perform all implementations inside the 'Apps/' directory. "
-                    f"Rejected path: {relative_path}"
-                )
-
+        # Write access is allowed everywhere within self.root (the workspace)
         return requested_path
 
     def safe_delete(self, relative_path: str):

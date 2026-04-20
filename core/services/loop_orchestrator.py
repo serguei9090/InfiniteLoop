@@ -1,7 +1,8 @@
 import logging
 import time
+import os
 import platform
-from typing import Optional, Any
+from typing import Optional, Any, AsyncGenerator, Dict
 from services.llm_bridge import LLMBridge
 from services.stream_parser import StreamParser
 from services.context_manager import ContextManager
@@ -29,6 +30,7 @@ class LoopOrchestrator:
         self.current_task: Optional[str] = None
         self.max_retries = 3
         self.retry_count = 0
+        self.silent_retries = 0
         self.event_callback: Optional[Callable[[str, Any], Coroutine]] = None
 
         # Token metrics tracking
@@ -36,6 +38,7 @@ class LoopOrchestrator:
         self.output_tokens = 0
 
     async def start_task(self, task: str):
+        self.context.reset()
         self.current_task = task
         self.task_active = True
         self._set_dynamic_system_prompt()
@@ -57,13 +60,11 @@ Environment:
 - Shell Capability: {"PowerShell/CMD" if platform.system() == "Windows" else "Bash/Sh"}
 
 Project Structure:
-- core/ : Backend (FastAPI)
-  - main.py : Entry point
-  - services/ : Business logic (Immutabe)
-  - modules/ : Core modules (Immutable)
-- ui/ : Frontend (React)
-  - src/ : Source files
-- workspace/ : General sandbox
+- core/ : InfiniteLoop Backend logic (IMMUTABLE, READ-ONLY). 
+- ui/   : InfiniteLoop Frontend (IMMUTABLE, READ-ONLY).
+- workspace/ : YOUR EXCLUSIVE WORKSPACE (READ-WRITE). All code development happens here.
+  - Paths should be relative to workspace root (e.g., 'test_feature/readme.md').
+  - The orchestrator runner will automatically resolve these paths.
 
 Current Task: {self.current_task}
 
@@ -123,7 +124,7 @@ TERMINATION:
         self.input_tokens = self._calculate_input_tokens()
 
         async for chunk, is_thinking in parser.parse(
-            self.llm_bridge.chat_stream(self.context.get_messages())
+            self._stream_adapter(self.llm_bridge.chat_stream(self.context.get_messages()))
         ):
             # Approx tokens: 4 chars per token
             chunk_tokens = len(chunk) / 4
@@ -156,9 +157,19 @@ TERMINATION:
 
             full_response += chunk
 
-        print("\n--- Step Complete ---")
+        print(f"\n--- MISSION OUTPUT ---\n{full_response}\n--- Step Complete ---")
 
         # Add response to history
+        if not full_response.strip():
+            self.silent_retries += 1
+            logger.warning(f"⚠️ Empty LLM response (Retry {self.silent_retries}/3)")
+            if self.silent_retries >= 3:
+                logger.error("🛑 Stopping loop: LLM is repeatedly returning empty responses.")
+                self.stop_task()
+                return
+            return # Skip tool handling and try again
+
+        self.silent_retries = 0 # Reset on valid response
         self.context.add_message("assistant", full_response)
 
         # Detect tool call
@@ -180,6 +191,7 @@ TERMINATION:
             "status", {"state": "Executing Tool", "retry": self.retry_count}
         )
         result = await self.tool_engine.execute(content)
+        print(f"--- TOOL RESULT ---\n{result}\n-------------------")
 
         if result["success"]:
             self.retry_count = 0  # Reset retry on success
@@ -214,13 +226,22 @@ TERMINATION:
             else:
                 self.context.add_message(
                     "user",
-                    f"{error_msg}\nPlease fix the arguments or try a different approach.",
+                    f"Tool Failed: {result['error']}\n"
+                    "PLEASE ANALYZE THE FAILURE: Why did this fail? Is a file missing? Is the command syntax wrong?\n"
+                    "If you need to create a directory before writing a file, do it now. Then retry the mission."
                 )
 
     def _calculate_input_tokens(self) -> int:
         # Simplified tokenization: ~4 chars per token
         total_chars = sum(len(m["content"]) for m in self.context.get_messages())
         return int(total_chars / 4)
+
+    async def _stream_adapter(self, stream: AsyncGenerator[Dict, None]) -> AsyncGenerator[str, None]:
+        """Convert LLM delta dicts to plain strings for the parser."""
+        async for delta in stream:
+            content = delta.get("content")
+            if content:
+                yield content
 
     def stop_task(self):
         self.task_active = False

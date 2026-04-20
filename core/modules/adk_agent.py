@@ -87,7 +87,7 @@ class ADKOrchestrator:
                     self.base_tools.execute_cmd,
                     self.base_tools.create_new_tool
                 ],
-                model="openai/gpt-4o" 
+                model="qwen/qwen3.5-9b"
             )
             
             # Setup the runner
@@ -121,6 +121,7 @@ class ADKOrchestrator:
         return await self.auto_adaptation.run_self_improvement_loop()
 
     def _get_base_instructions(self) -> str:
+        return """
         You are the IMMUTABLE CORE Brain. Your goal is to complete missions with technical precision.
 
         REASONING:
