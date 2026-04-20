@@ -173,7 +173,7 @@ class AutoAdaptationEngine:
             }
 
         module_info = self.modules[category][name]
-        config = self.test_configs.get(category, {"timeout": 30, "retry": 2})
+        self.test_configs.get(category, {"timeout": 30, "retry": 2})
 
         module_info.status = "testing"
 

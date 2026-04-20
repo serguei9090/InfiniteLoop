@@ -50,7 +50,7 @@ class LoopOrchestrator:
 
     def _set_dynamic_system_prompt(self):
         dynamic_tools = self.evolution.get_tool_descriptions()
-        os_info = f"{platform.system()} {platform.release()} ({platform.machine()})"
+        f"{platform.system()} {platform.release()} ({platform.machine()})"
         prompt = f"""[IMMUTABLE CORE v4]
 DIRECTIVE: Complete MISSION with absolute technical precision.
 BOUNDARIES:

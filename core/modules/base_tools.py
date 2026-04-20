@@ -14,7 +14,7 @@ import logging
 from modules.sandbox import WorkspaceGuard
 from modules.context import ContextEngine
 from modules.evolution import EvolutionEngine
-from typing import Dict, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -157,5 +157,62 @@ class BaseTools:
                 "data": stdout.decode(),
                 "error": stderr.decode() if not success else "",
             }
+        except Exception as e:
+            return {"success": False, "data": "", "error": str(e)}
+
+    async def glob_search(self, pattern: str) -> Dict:
+        """
+        Find files in the workspace matching a glob pattern.
+        """
+        try:
+            import glob
+            # Only search within the workspace root
+            search_path = str(self.guard.root / pattern)
+            results = glob.glob(search_path, recursive=True)
+            # Make paths relative to root for the output
+            rel_results = [os.path.relpath(p, str(self.guard.root)) for p in results]
+            return {"success": True, "data": rel_results, "error": None}
+        except Exception as e:
+            return {"success": False, "data": "", "error": str(e)}
+
+    async def grep_search(self, query: str, path: str = ".") -> Dict:
+        """
+        Search for a string pattern in files.
+        """
+        try:
+            safe_path = self.guard.secure_path(path, write=False)
+            if platform.system() == "Windows":
+                # PowerShell Select-String
+                cmd = f'powershell.exe -Command "Get-ChildItem -Path \'{safe_path}\' -Recurse -File | Select-String -Pattern \'{query}\'"'
+            else:
+                # Unix grep
+                cmd = f'grep -rn "{query}" "{safe_path}"'
+
+            process = await asyncio.create_subprocess_shell(
+                cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=self.guard.root,
+            )
+            stdout, stderr = await process.communicate()
+
+            return {
+                "success": True,
+                "data": stdout.decode(),
+                "error": stderr.decode() if stderr else "",
+            }
+        except Exception as e:
+            return {"success": False, "data": "", "error": str(e)}
+
+    async def web_fetch(self, url: str) -> Dict:
+        """
+        Fetch content from a given URL.
+        """
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, follow_redirects=True, timeout=10.0)
+                response.raise_for_status()
+                return {"success": True, "data": response.text, "error": None}
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
