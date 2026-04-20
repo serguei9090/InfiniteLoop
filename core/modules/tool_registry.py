@@ -333,7 +333,7 @@ class ToolRegistry:
         try:
             with open(self.instructions_path, "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return []
 
     async def save_adaptation_log(self):

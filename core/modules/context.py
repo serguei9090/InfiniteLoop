@@ -11,9 +11,9 @@ import tree_sitter_typescript as tstypescript
 import tree_sitter_html as tshtml
 import tree_sitter_css as tscss
 import tree_sitter_markdown as tsmarkdown
-from tree_sitter import Language, Parser, Node, Query, QueryCursor
+from tree_sitter import Language, Parser, Query, QueryCursor
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 class ContextEngine:

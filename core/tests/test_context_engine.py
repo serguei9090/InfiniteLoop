@@ -1,5 +1,3 @@
-import pytest
-from pathlib import Path
 from modules.context import ContextEngine
 
 def test_python_compression(tmp_path):

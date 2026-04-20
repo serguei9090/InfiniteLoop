@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import logging
 import importlib.util
 import sys
+from modules.dashboard_router import router as dashboard_router
 import asyncio
 from pathlib import Path
 
@@ -397,7 +398,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # ==================== DASHBOARD ROUTER ====================
 
-from modules.dashboard_router import router as dashboard_router
 
 app.include_router(dashboard_router)
 
