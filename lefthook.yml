@@ -1,0 +1,20 @@
+# lefthook.yml for IMMUTABLE CORE
+# Enforces quality gating for Python (Ruff) and React (Biome)
+
+pre-commit:
+  parallel: true
+  commands:
+    backend-lint:
+      glob: "core/**/*.py"
+      run: cd core && uv run ruff check --fix {staged_files}
+    frontend-lint:
+      glob: "ui/**/*.{ts,tsx,js,jsx}"
+      run: cd ui && bun x biome check --apply {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    backend-test:
+      run: cd core && $env:PYTHONPATH="." && uv run pytest
+    frontend-test:
+      run: cd ui && bun x vitest run

@@ -1,0 +1,95 @@
+# Surgical Edit Prompt Template
+
+When asked to make code changes, respond with a JSON object in the following format:
+
+```json
+{
+  "type": "surgical_edit",
+  "file": "path/to/file.py",
+  "description": "Brief description of what this edit does",
+  "operations": [
+    {
+      "type": "replace",
+      "start_line": 10,
+      "end_line": 15,
+      "content": "def new_function():\n    return 'hello'"
+    }
+  ]
+}
+```
+
+## Operation Types
+
+### replace
+Replace lines N through M with new content.
+```json
+{
+  "type": "replace",
+  "start_line": 10,
+  "end_line": 15,
+  "content": "new content here"
+}
+```
+
+### insert
+Insert content at a specific line.
+```json
+{
+  "type": "insert",
+  "line": 20,
+  "content": "print('debug')"
+}
+```
+
+### delete
+Remove lines N through M.
+```json
+{
+  "type": "delete",
+  "start_line": 30,
+  "end_line": 35
+}
+```
+
+### append
+Add content to end of file.
+```json
+{
+  "type": "append",
+  "content": "\n# End of file"
+}
+```
+
+## Important Notes
+
+- Line numbers are 1-indexed (first line is 1, not 0)
+- Content should not include extra newlines unless needed
+- The "replace" operation replaces inclusive line range [start_line, end_line]
+- Use "insert" to add before a specific line
+- Multiple operations can be combined in the operations array
+- Operations are applied in reverse order (end to start) to preserve line numbers
+
+## Validation
+
+The edit will be validated before application:
+- File must exist (or create_if_missing must be true)
+- Line numbers must be valid for the file
+- Content will be checked for syntax (if it's code)
+- Backups are created before modification
+
+## Example: Adding a new method
+
+```json
+{
+  "type": "surgical_edit",
+  "file": "src/utils.py",
+  "description": "Add helper method for validation",
+  "operations": [
+    {
+      "type": "insert",
+      "line": 25,
+      "content": "def validate_email(email):\n    return '@' in email"
+    }
+  ]
+}
+```

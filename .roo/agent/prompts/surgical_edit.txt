@@ -1,0 +1,107 @@
+# Surgical Edit Prompt Template
+
+When asked to make code changes, respond with a JSON object in the following format:
+
+```json
+{
+  "type": "surgical_edit",
+  "file": "path/to/file.py",
+  "description": "Brief description of what this edit does",
+  "operations": [
+    {
+      "type": "replace",
+      "start_line": 10,
+      "end_line": 15,
+      "content": "def new_function():\n    return 'hello'"
+    }
+  ]
+}
+```
+
+## Operation Types
+
+### replace
+Replace lines N through M with new content.
+```json
+{
+  "type": "replace",
+  "start_line": 10,
+  "end_line": 15,
+  "content": "new content here"
+}
+```
+
+### insert
+Insert content at a specific line.
+```json
+{
+  "type": "insert",
+  "line": 20,
+  "content": "print('debug')"
+}
+```
+
+### delete
+Remove lines N through M.
+```json
+{
+  "type": "delete",
+  "start_line": 30,
+  "end_line": 35
+}
+```
+
+### append
+Add content to the end of a file.
+```json
+{
+  "type": "append",
+  "content": "# New section\nprint('done')"
+}
+```
+
+## Guidelines for Surgical Edits
+
+1. **Precision**: Only modify what is necessary. Do not rewrite entire functions unless required.
+2. **Context**: Understand the surrounding code before making changes.
+3. **Testing**: Ensure changes don't break existing tests.
+4. **Documentation**: Update docstrings if behavior changes.
+5. **Style**: Follow existing code style and conventions.
+
+## Common Patterns
+
+### Adding a new function
+```json
+{
+  "type": "append",
+  "content": "\ndef new_helper_function(param):\n    \"\"\"Helper function documentation.\"\"\"\n    return param * 2\n"
+}
+```
+
+### Refactoring a function
+```json
+{
+  "type": "replace",
+  "start_line": 10,
+  "end_line": 25,
+  "content": "def improved_function(param):\n    \"\"\"Improved version with better documentation.\"\"\"\n    # Implementation here\n    return result\n"
+}
+```
+
+### Removing dead code
+```json
+{
+  "type": "delete",
+  "start_line": 30,
+  "end_line": 45
+}
+```
+
+## Safety Checks
+
+Before making any edit:
+1. Read the file to understand current state
+2. Verify line numbers are accurate
+3. Check for edge cases
+4. Consider impact on related code
+5. Plan for rollback if needed

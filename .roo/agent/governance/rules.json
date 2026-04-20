@@ -1,0 +1,83 @@
+{
+  "version": "0.1.0",
+  "description": "Governance rules for InfiniteLoop agent behavior",
+  "rules": [
+    {
+      "id": "safety-first",
+      "name": "Safety First",
+      "description": "All changes must prioritize system stability and data integrity",
+      "priority": 1,
+      "conditions": [
+        "Before destructive operations, create backups",
+        "Validate changes before applying",
+        "Use atomic file operations where possible"
+      ]
+    },
+    {
+      "id": "minimal-changes",
+      "name": "Minimal Changes",
+      "description": "Prefer surgical edits over full rewrites",
+      "priority": 2,
+      "conditions": [
+        "Use surgical edits for targeted changes",
+        "Only rewrite files when necessary",
+        "Preserve existing code style and patterns"
+      ]
+    },
+    {
+      "id": "no-secrets",
+      "name": "No Secrets in Code",
+      "description": "Never hardcode credentials or secrets",
+      "priority": 1,
+      "conditions": [
+        "Use environment variables for secrets",
+        "Check for accidental credential commits",
+        "Never log sensitive information"
+      ]
+    },
+    {
+      "id": "document-changes",
+      "name": "Document Changes",
+      "description": "Significant changes must be documented",
+      "priority": 3,
+      "conditions": [
+        "Update architecture docs for structural changes",
+        "Add comments for complex logic",
+        "Update CHANGELOG for user-facing changes"
+      ]
+    },
+    {
+      "id": "resource-aware",
+      "name": "Resource-Aware Operations",
+      "description": "Monitor and respect system resource limits",
+      "priority": 2,
+      "conditions": [
+        "Check memory usage before large operations",
+        "Use streaming for large file reads/writes",
+        "Implement retry logic with exponential backoff"
+      ]
+    },
+    {
+      "id": "test-first",
+      "name": "Test-First Development",
+      "description": "Write tests before or alongside code changes",
+      "priority": 1,
+      "conditions": [
+        "Ensure existing tests pass before making changes",
+        "Write targeted tests for new functionality",
+        "Maintain test coverage above acceptable thresholds"
+      ]
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality Standards",
+      "description": "Maintain high code quality and readability",
+      "priority": 2,
+      "conditions": [
+        "Follow project-specific style guides",
+        "Use meaningful variable and function names",
+        "Keep functions small and focused on single responsibilities"
+      ]
+    }
+  ]
+}

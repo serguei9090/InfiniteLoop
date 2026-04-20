@@ -1,0 +1,77 @@
+{
+  "version": "0.1.0",
+  "description": "Governance rules for InfiniteLoop agent behavior",
+  "rules": [
+    {
+      "id": "safety-first",
+      "name": "Safety First",
+      "description": "All changes must prioritize system stability and data integrity",
+      "priority": 1,
+      "conditions": [
+        "Before destructive operations, create backups",
+        "Validate changes before applying",
+        "Use atomic file operations where possible"
+      ]
+    },
+    {
+      "id": "minimal-changes",
+      "name": "Minimal Changes",
+      "description": "Prefer surgical edits over full rewrites",
+      "priority": 2,
+      "conditions": [
+        "Use surgical edits for targeted changes",
+        "Only rewrite files when necessary",
+        "Preserve existing code style and patterns"
+      ]
+    },
+    {
+      "id": "no-secrets",
+      "name": "No Secrets in Code",
+      "description": "Never hardcode credentials or secrets",
+      "priority": 1,
+      "conditions": [
+        "Use environment variables for secrets",
+        "Check for accidental credential commits",
+        "Never log sensitive information"
+      ]
+    },
+    {
+      "id": "document-changes",
+      "name": "Document Changes",
+      "description": "Significant changes must be documented",
+      "priority": 3,
+      "conditions": [
+        "Update architecture docs for structural changes",
+        "Add comments for complex logic",
+        "Update CHANGELOG for user-facing changes"
+      ]
+    },
+    {
+      "id": "resource-aware",
+      "name": "Resource Awareness",
+      "description": "Be mindful of system resources",
+      "priority": 2,
+      "conditions": [
+        "Monitor VRAM usage during model operations",
+        "Implement cooldown when resources are constrained",
+        "Optimize for the 12GB VRAM limit"
+      ]
+    },
+    {
+      "id": "rollback-ready",
+      "name": "Rollback Ready",
+      "description": "Always be able to revert to a working state",
+      "priority": 1,
+      "conditions": [
+        "Commit before significant changes",
+        "Test before marking as complete",
+        "Preserve rollback capability"
+      ]
+    }
+  ],
+  "enforcement": {
+    "auto_check": true,
+    "warn_on_violation": true,
+    "block_on_critical": true
+  }
+}

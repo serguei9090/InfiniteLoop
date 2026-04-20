@@ -1,0 +1,88 @@
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+build/
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+# Python artifacts
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Bun-specific (bun install)
+.bun
+.bun-cache
+.bun/install.log
+
+# Common build outputs and caches
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
+.parcel-cache/
+.swc/
+.vercel/
+.rspack/
+.vite/
+
+# IDE and editor files (already has .idea, adding VSCode specific)
+.vscode/settings.json
+.vscode/extensions.json
+.vscode/tasks.json
+.vscode/launch.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Lock files (keep bun.lock tracked, but ignore generated ones)
+bun.lockb
+yarn-error.log
+npm-debug.log
+pnpm-debug.log
+
+# Test artifacts
+.nyc_output/
+jest-*.json
+test-results/
+__tests__/coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+.trash/
+

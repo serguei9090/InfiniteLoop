@@ -1,0 +1,52 @@
+# Context Summarization Prompt Template
+
+Summarize the following conversation context into a compressed summary. The summary should capture the essential information while reducing token count.
+
+## Summary Format
+
+Your response should be structured as follows:
+
+1. **Overview** (2-3 sentences): Brief description of what was discussed/accomplished
+2. **Key Decisions**: Bullet list of important decisions made
+3. **Architecture Changes**: Bullet list of structural or design changes
+4. **Code Changes**: Brief list of files modified and what changed
+5. **Next Steps**: Suggested follow-up actions
+
+## Guidelines
+
+- Be concise but comprehensive
+- Preserve technical details that affect implementation
+- Note any constraints or requirements established
+- Capture the "why" behind decisions, not just the "what"
+- Highlight any unresolved questions or issues
+
+## Example Summary
+
+**Overview**: We implemented a task queue system for the orchestrator with async support and persistence. The system uses JSON files for state management and provides callbacks for task status changes.
+
+**Key Decisions**:
+- Chose asyncio.Queue as the base for thread-safety
+- Decided on JSON file persistence for simplicity
+- Settled on enum-based status tracking
+
+**Architecture Changes**:
+- Added TaskQueue class to core module
+- Introduced Task dataclass for task representation
+- Created TaskStatus enum for state management
+
+**Code Changes**:
+- `core/task_queue.py`: New file with queue implementation
+- `config.py`: Added queue persistence settings
+
+**Next Steps**:
+- Implement task retry logic
+- Add WebSocket notifications for status changes
+- Create UI for task monitoring
+
+## Best Practices
+
+1. **Be specific**: Include file paths, function names, and concrete details
+2. **Preserve context**: Note why decisions were made, not just what was done
+3. **Highlight risks**: Mention any known issues or areas needing attention
+4. **Track progress**: Note what's complete vs. what's in progress
+5. **Flag blockers**: Clearly identify any obstacles preventing forward movement
