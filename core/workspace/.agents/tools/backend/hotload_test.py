@@ -1,2 +1,2 @@
 def execute(args):
-    return {'status': 'loaded'}
+    return {"status": "loaded"}

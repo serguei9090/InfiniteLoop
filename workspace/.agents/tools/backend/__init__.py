@@ -7,8 +7,4 @@ from .file_operations import FileOperationsTool
 from .code_execution import CodeExecutionTool
 from .data_processing import DataProcessingTool
 
-__all__ = [
-    "FileOperationsTool",
-    "CodeExecutionTool", 
-    "DataProcessingTool"
-]
+__all__ = ["FileOperationsTool", "CodeExecutionTool", "DataProcessingTool"]

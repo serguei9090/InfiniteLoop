@@ -9,11 +9,11 @@ class LLMBridge:
         self.client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
     async def chat_stream(
-        self, 
-        messages: List[Dict[str, str]], 
+        self,
+        messages: List[Dict[str, str]],
         temperature: float = 0.7,
         tools: List[Dict] = None,
-        tool_choice: str = "auto"
+        tool_choice: str = "auto",
     ) -> AsyncGenerator[Dict, None]:
         """
         Stream responses from the local LLM.
@@ -39,11 +39,11 @@ class LLMBridge:
             yield {"content": f"Error in LLM Bridge: {str(e)}"}
 
     async def chat_complete(
-        self, 
-        messages: List[Dict[str, str]], 
+        self,
+        messages: List[Dict[str, str]],
         temperature: float = 0.7,
         tools: List[Dict] = None,
-        tool_choice: str = "auto"
+        tool_choice: str = "auto",
     ) -> Dict:
         """
         Simple completion call with tool support.

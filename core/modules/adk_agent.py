@@ -13,71 +13,61 @@ from modules.auto_adaptation import AutoAdaptationEngine
 
 logger = logging.getLogger(__name__)
 
+
 class ADKOrchestrator:
     """
     Orchestrator powered by Google ADK 2.0.
-    Replaces the legacy OrchestratorBrain with a modern Runner.
+    Standardized to enforce the IMMUTABLE CORE v4 security boundaries.
     """
+
     def __init__(self, workspace_root: str = "."):
-        self.workspace_root = Path(workspace_root).resolve()
-        
-        # Initialize dependencies
+        self.project_root = Path(workspace_root).resolve()
+        self.workspace_root = (self.project_root / "workspace").resolve()
+
+        # Initialize dependencies - Strictly jailed to workspace/
         self.guard = WorkspaceGuard(str(self.workspace_root))
         self.context_engine = ContextEngine()
-        self.evolution = EvolutionEngine(str(self.workspace_root / ".agents" / "dynamic_tools"))
-        self.auto_adaptation = AutoAdaptationEngine(str(self.workspace_root))
-        
+        self.evolution = EvolutionEngine(
+            str(self.workspace_root / ".agents" / "dynamic_tools")
+        )
+        self.auto_adaptation = AutoAdaptationEngine(str(self.project_root))
+
         # Initialize internal tools
         self.base_tools = BaseTools(self.guard, self.context_engine, self.evolution)
-        
+
         # State tracking
         self.task_active = False
         self.current_task: Optional[str] = None
-        
-        # ADK Components (Agents are LlmAgent in this version)
+
+        # ADK Components
         self.agent: Optional[LlmAgent] = None
         self.runner: Optional[InMemoryRunner] = None
-        
-        # Callbacks (for UI)
+
+        # Callbacks
         self.status_callback = None
         self.thought_callback = None
         self.action_callback = None
-        
+
         # Telemetry
-        self.tool_metrics = {} # {tool_name: {"calls": 0, "success": 0, "error": 0}}
+        self.tool_metrics = {}
         self.event_history = []
         self.start_time = time.time()
 
     async def initialize(self):
         """Build the ADK Agent with our toolset."""
         if not self.runner:
-            logger.info("Initializing ADK Orchestrator with local-model...")
-            
-            # Register local model with LiteLlm in ADK registry
-            from google.adk.models import LLMRegistry
-            from google.adk.models.lite_llm import LiteLlm
+            logger.info("Initializing ADK Orchestrator [IMMUTABLE CORE v4]...")
+
             import os
-            
-            # Debug Wrapper to log raw responses
-            class DebugLiteLlm(LiteLlm):
-                async def generate_content_async(self, request, **kwargs):
-                    logger.info(f"PROXIED: generate_content_async for {self.model}")
-                    async for response in super().generate_content_async(request, **kwargs):
-                        logger.info(f"PROXIED RESPONSE: {response}")
-                        yield response
-            
-            # Use LiteLlm for any model prefixed with 'openai/' or 'local-model'
-            LLMRegistry._register("openai/.*", DebugLiteLlm)
-            LLMRegistry._register("local-model", DebugLiteLlm)
-            
-            # Configure LiteLLM to use the local endpoint (LM-Studio style)
+
+            # Configure LiteLLM
             os.environ["OPENAI_API_BASE"] = "http://127.0.0.1:1234/v1"
             os.environ["OPENAI_API_KEY"] = "lm-studio"
-            
-            # Define the agent
+
+            # Define the agent with v4 instructions
             self.agent = LlmAgent(
-                name="IMMUTABLE_CORE_AGENT_AUTONOMOUS",
-                description="Autonomous orchestrator for the InfiniteLoop environment.",
+                name="IMMUTABLE_CORE_ORCHESTRATOR",
+                description="Autonomous mission-critical orchestrator for InfiniteLoop.",
                 instruction=self._get_base_instructions(),
                 tools=[
                     self.base_tools.read_file,
@@ -85,16 +75,16 @@ class ADKOrchestrator:
                     self.base_tools.delete_file,
                     self.base_tools.create_folder,
                     self.base_tools.execute_cmd,
-                    self.base_tools.create_new_tool
+                    self.base_tools.create_new_tool,
                 ],
-                model="qwen/qwen3.5-9b"
+                model="qwen/qwen3.5-9b",
             )
-            
+
             # Setup the runner
             self.runner = InMemoryRunner(agent=self.agent, app_name="InfiniteLoop")
-            logger.info("ADK Agent and Runner defined with native tools.")
-            
-        return {"success": True, "message": "ADK Orchestrator ready"}
+            logger.info("ADK Agent initialized with v4 boundaries.")
+
+        return {"success": True, "message": "ADK Orchestrator v4 ready"}
 
     async def get_status(self) -> Dict[str, Any]:
         """Proxy for health/status checks."""
@@ -102,17 +92,29 @@ class ADKOrchestrator:
             "status": "online",
             "task_active": self.task_active,
             "current_task": self.current_task,
-            "tools_count": 6, # Base tools
-            "agent_instructions_count": 0
+            "tools_count": 6,  # Base tools
+            "agent_instructions_count": 0,
         }
 
     async def list_tools(self, category: Optional[str] = None) -> List[Dict]:
         """List registered tools."""
-        # For ADK, we'd list agent.tools.
-        # Placeholder for compatibility.
-        return [{"name": tool.__name__, "description": tool.__doc__} for tool in self.agent.tools] if self.agent else []
+        return (
+            [
+                {"name": tool.__name__, "description": tool.__doc__}
+                for tool in self.agent.tools
+            ]
+            if self.agent
+            else []
+        )
 
-    async def register_tool(self, name: str, description: str, code: str, schema: Optional[dict] = None, category: str = "backend"):
+    async def register_tool(
+        self,
+        name: str,
+        description: str,
+        code: str,
+        schema: Optional[dict] = None,
+        category: str = "backend",
+    ):
         """Register dynamic tool."""
         return await self.base_tools.create_new_tool(name, code, str(schema))
 
@@ -121,60 +123,64 @@ class ADKOrchestrator:
         return await self.auto_adaptation.run_self_improvement_loop()
 
     def _get_base_instructions(self) -> str:
-        return """
-        You are the IMMUTABLE CORE Brain. Your goal is to complete missions with technical precision.
+        return """[IMMUTABLE CORE v4]
+DIRECTIVE: Complete MISSION with absolute technical precision.
+BOUNDARIES:
+- core/ & ui/ : READ-ONLY. Internal logic. Do not attempt to modify.
+- workspace/  : READ-WRITE. Your exclusive development sandbox. All work happens here.
+- Pathing: All paths MUST be relative to workspace/ root. The runner handles resolution.
 
-        REASONING:
-        1. Always start your response with <|think|> blocks.
-        2. Break down the task into small, verifiable steps.
-        3. Use tools to verify your assumptions before editing.
-        
-        TERRITORY RULES:
-        1. You have READ access to the entire project root.
-        You have WRITE access ONLY to the 'Apps/' directory and '.trash/' directory.
-        All new features, applications, and evolution must be implemented inside 'Apps/'.
-        The root project (including the 'core/' directory) is IMMUTABLE and READ-ONLY for you.
-        """
+REASONING:
+1. <|think|> block mandatory. Surgical step-by-step breakdown.
+2. Read before Write. Verify assumptions with tools before acting.
+
+AUTOFIX LOOP:
+If a tool returns an error, analyze the root cause (e.g., missing directory) in your next <|think|> block, perform the fix (e.g., create_folder), and retry.
+
+MISSION: {self.current_task}
+TERMINATION: Output "TASK_COMPLETE" when finished.
+"""
 
     async def start_mission(self, mission_text: str):
         """Run the ADK mission loop via run_async generator."""
         if not self.runner:
             await self.initialize()
-            
+
         self.task_active = True
         self.current_task = mission_text
-        
+
         try:
             logger.info(f"Starting mission via ADK Runner: {mission_text}")
-            
+
             # ADK 2.0 expects a Content object for new_message
             from google.genai import types
-            new_message = types.Content(role="user", parts=[types.Part(text=mission_text)])
-            
+
+            new_message = types.Content(
+                role="user", parts=[types.Part(text=mission_text)]
+            )
+
             # Ensure session exists
             session_id = "default_session"
             user_id = "default_user"
-            
+
             session = await self.runner.session_service.get_session(
-                app_name=self.runner.app_name, 
-                user_id=user_id, 
-                session_id=session_id
+                app_name=self.runner.app_name, user_id=user_id, session_id=session_id
             )
             if not session:
                 await self.runner.session_service.create_session(
                     app_name=self.runner.app_name,
                     user_id=user_id,
-                    session_id=session_id
+                    session_id=session_id,
                 )
-            
+
             # Run the agent mission (async generator)
             async for event in self.runner.run_async(
-                user_id=user_id,
-                session_id=session_id,
-                new_message=new_message
+                user_id=user_id, session_id=session_id, new_message=new_message
             ):
                 is_final = event.is_final_response()
-                logger.debug(f"ADK EVENT [Author: {event.author}] [Final: {is_final}] [Partial: {event.partial}]")
+                logger.debug(
+                    f"ADK EVENT [Author: {event.author}] [Final: {is_final}] [Partial: {event.partial}]"
+                )
                 logger.debug(f"ADK EVENT CONTENT: {event.content}")
                 # Process ADK Events and emit to UI
                 self.event_history.append(event)
@@ -182,27 +188,40 @@ class ADKOrchestrator:
                     self.event_history.pop(0)
 
                 if event.content and event.content.parts:
-                    content_str = "".join([p.text for p in event.content.parts if p.text])
+                    content_str = "".join(
+                        [p.text for p in event.content.parts if p.text]
+                    )
                     if content_str:
                         logger.info(f"Agent Output: {content_str}")
                     if event.author == "model":
                         await self._emit_thought(content_str)
-                
+
                 if event.actions:
                     logger.info(f"Agent Actions: {event.actions}")
                     # Update tool metrics
-                    if hasattr(event.actions, 'tool_calls') and event.actions.tool_calls:
+                    if (
+                        hasattr(event.actions, "tool_calls")
+                        and event.actions.tool_calls
+                    ):
                         for tc in event.actions.tool_calls:
                             name = tc.function.name
                             if name not in self.tool_metrics:
-                                self.tool_metrics[name] = {"calls": 0, "success": 0, "error": 0}
+                                self.tool_metrics[name] = {
+                                    "calls": 0,
+                                    "success": 0,
+                                    "error": 0,
+                                }
                             self.tool_metrics[name]["calls"] += 1
-                    
-                    await self._emit_action(event.actions.to_dict() if hasattr(event.actions, 'to_dict') else str(event.actions))
+
+                    await self._emit_action(
+                        event.actions.to_dict()
+                        if hasattr(event.actions, "to_dict")
+                        else str(event.actions)
+                    )
 
             logger.info("ADK Mission Complete.")
             return {"success": True, "message": "Mission ended successfully"}
-            
+
         except Exception as e:
             logger.exception(f"ADK Execution Error: {e}")
             return {"success": False, "error": str(e)}

@@ -1,6 +1,5 @@
 import logging
 import time
-import os
 import platform
 from typing import Optional, Any, AsyncGenerator, Dict
 from services.llm_bridge import LLMBridge
@@ -52,56 +51,34 @@ class LoopOrchestrator:
     def _set_dynamic_system_prompt(self):
         dynamic_tools = self.evolution.get_tool_descriptions()
         os_info = f"{platform.system()} {platform.release()} ({platform.machine()})"
-        prompt = f"""You are the IMMUTABLE CORE Orchestrator. 
-Your primary directive is to expand the system's capabilities through autonomous coding while respecting the integrity of core services.
+        prompt = f"""[IMMUTABLE CORE v4]
+DIRECTIVE: Complete MISSION with absolute technical precision.
+BOUNDARIES:
+- core/ & ui/ : READ-ONLY. Internal logic. Do not attempt to modify.
+- workspace/  : READ-WRITE. Your exclusive development sandbox. All work happens here.
+- Pathing: All paths MUST be relative to workspace/ root. The runner handles resolution.
 
-Environment:
-- Operating System: {os_info}
-- Shell Capability: {"PowerShell/CMD" if platform.system() == "Windows" else "Bash/Sh"}
+REASONING:
+1. <|think|> block mandatory. Surgical step-by-step breakdown.
+2. Read before Write. Verify assumptions with tools before acting.
 
-Project Structure:
-- core/ : InfiniteLoop Backend logic (IMMUTABLE, READ-ONLY). 
-- ui/   : InfiniteLoop Frontend (IMMUTABLE, READ-ONLY).
-- workspace/ : YOUR EXCLUSIVE WORKSPACE (READ-WRITE). All code development happens here.
-  - Paths should be relative to workspace root (e.g., 'test_feature/readme.md').
-  - The orchestrator runner will automatically resolve these paths.
+PROTOCOL:
+- Output tool calls in a single JSON block.
+- Format: {{"tool": "tool_name", "args": {{"arg": "val"}}}}
 
-Current Task: {self.current_task}
-
-You are IMMUTABLE CORE, an autonomous mission-critical orchestrator. 
-Your goal is to complete the assigned MISSION with zero hesitation and absolute technical precision.
-
-REASONING PROTOCOL:
-1. Always start your response with a <|think|> block.
-2. Inside <|think|>, break down the mission into surgical steps.
-3. Critically evaluate if you need to read files before making changes.
-
-TOOL CALL PROTOCOL:
-- You MUST output tool calls in a single JSON block.
-- DO NOT use pseudo-tags like <|write_file|>. 
-- Use the following format:
-```json
-{{
-  "tool": "tool_name",
-  "args": {{
-    "arg1": "value1"
-  }}
-}}
-```
-
-AVAILABLE BASE TOOLS:
-- read_file(path, mode='skeleton'): Returns file content. Use 'skeleton' for high-level overview or 'full' for exact code.
-- write_file(path, content): Creates or overwrites a file. Ensure parent directories exist.
-- delete_file(path): Moves a file to the .trash folder.
-- create_folder(path): Creates a directory (and parents) if it doesn't exist.
-- execute_cmd(command): Runs a shell command in the workspace. Use for build, test, and lint.
-- create_new_tool(name, code, schema): Permanent capability evolution.
+TOOLS:
+- read_file(path, mode='skeleton'|'full')
+- write_file(path, content)
+- delete_file(path)
+- create_folder(path)
+- execute_cmd(command)
+- create_new_tool(name, code, schema)
 
 EVOLVED TOOLS:
-{dynamic_tools if dynamic_tools else "No custom tools registered yet."}
+{dynamic_tools if dynamic_tools else "None."}
 
-TERMINATION:
-- When the MISSION is complete, output "TASK_COMPLETE".
+MISSION: {self.current_task}
+TERMINATION: Output "TASK_COMPLETE" when finished.
 """
         self.context.set_system_prompt(prompt)
 
@@ -124,7 +101,9 @@ TERMINATION:
         self.input_tokens = self._calculate_input_tokens()
 
         async for chunk, is_thinking in parser.parse(
-            self._stream_adapter(self.llm_bridge.chat_stream(self.context.get_messages()))
+            self._stream_adapter(
+                self.llm_bridge.chat_stream(self.context.get_messages())
+            )
         ):
             # Approx tokens: 4 chars per token
             chunk_tokens = len(chunk) / 4
@@ -164,12 +143,14 @@ TERMINATION:
             self.silent_retries += 1
             logger.warning(f"⚠️ Empty LLM response (Retry {self.silent_retries}/3)")
             if self.silent_retries >= 3:
-                logger.error("🛑 Stopping loop: LLM is repeatedly returning empty responses.")
+                logger.error(
+                    "🛑 Stopping loop: LLM is repeatedly returning empty responses."
+                )
                 self.stop_task()
                 return
-            return # Skip tool handling and try again
+            return  # Skip tool handling and try again
 
-        self.silent_retries = 0 # Reset on valid response
+        self.silent_retries = 0  # Reset on valid response
         self.context.add_message("assistant", full_response)
 
         # Detect tool call
@@ -218,7 +199,8 @@ TERMINATION:
             if self.retry_count >= self.max_retries:
                 self.task_active = False
                 self.context.add_message(
-                    "user", f"CRITICAL: Tool failed 3 times. {error_msg}. Aborting."
+                    "user",
+                    f"CRITICAL: Tool failed 3 times. {error_msg}. Aborting mission.",
                 )
                 await self._emit(
                     "status", {"state": "Failed", "retry": self.retry_count}
@@ -226,9 +208,11 @@ TERMINATION:
             else:
                 self.context.add_message(
                     "user",
-                    f"Tool Failed: {result['error']}\n"
-                    "PLEASE ANALYZE THE FAILURE: Why did this fail? Is a file missing? Is the command syntax wrong?\n"
-                    "If you need to create a directory before writing a file, do it now. Then retry the mission."
+                    f"TOOL_ERROR: {result['error']}\n"
+                    "ACTION REQUIRED:\n"
+                    "1. Analyze the root cause of this failure in your next <|think|> block.\n"
+                    "2. Propose a corrective action (e.g., creating missing directories, fixing syntax).\n"
+                    "3. Retry the tool call with corrected arguments or perform the fix first.",
                 )
 
     def _calculate_input_tokens(self) -> int:
@@ -236,7 +220,9 @@ TERMINATION:
         total_chars = sum(len(m["content"]) for m in self.context.get_messages())
         return int(total_chars / 4)
 
-    async def _stream_adapter(self, stream: AsyncGenerator[Dict, None]) -> AsyncGenerator[str, None]:
+    async def _stream_adapter(
+        self, stream: AsyncGenerator[Dict, None]
+    ) -> AsyncGenerator[str, None]:
         """Convert LLM delta dicts to plain strings for the parser."""
         async for delta in stream:
             content = delta.get("content")

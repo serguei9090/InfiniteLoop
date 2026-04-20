@@ -106,15 +106,15 @@ class ContextEngine:
                         (quoted_attribute_value) @attr.value))
                 (#match? @attr.name "id|class"))
         """)
-        
+
         captures = query.captures(tree.root_node)
         skeleton = []
-        
+
         for node, tag in captures:
             if tag == "tag.name":
-                tag_text = node.text.decode('utf8')
+                tag_text = node.text.decode("utf8")
                 skeleton.append(f"<{tag_text} ... />")
-                
+
         return "\n".join(skeleton[:20])
 
     def _parse_css(self, content: str) -> str:
@@ -123,9 +123,9 @@ class ContextEngine:
             (rule_set
                 (selectors) @selectors)
         """)
-        
+
         captures = query.captures(tree.root_node)
-        skeleton = [node.text.decode('utf8') + " { ... }" for node, _ in captures]
+        skeleton = [node.text.decode("utf8") + " { ... }" for node, _ in captures]
         return "\n".join(skeleton[:20])
 
     def _parse_markdown(self, content: str) -> str:
@@ -133,7 +133,7 @@ class ContextEngine:
         query = self.md_lang.query("""
             (atx_heading) @heading
         """)
-        
+
         captures = query.captures(tree.root_node)
-        skeleton = [node.text.decode('utf8') for node, _ in captures]
+        skeleton = [node.text.decode("utf8") for node, _ in captures]
         return "\n".join(skeleton)

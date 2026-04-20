@@ -19,10 +19,13 @@ class ToolEngine:
         try:
             # Try to find all JSON-like blocks and take the first valid one
             import re
-            json_blocks = re.findall(r"```json\s*(\{.*?\})\s*```", tool_call_json, re.DOTALL)
+
+            json_blocks = re.findall(
+                r"```json\s*(\{.*?\})\s*```", tool_call_json, re.DOTALL
+            )
             if not json_blocks:
                 json_blocks = re.findall(r"(\{.*?\})", tool_call_json, re.DOTALL)
-            
+
             if json_blocks:
                 clean_json = json_blocks[0]
             else:

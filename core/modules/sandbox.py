@@ -25,12 +25,14 @@ class WorkspaceGuard:
             try:
                 relative_path = path_obj.relative_to(self.root)
             except ValueError:
-                raise PermissionError(f"Security Alert: Path {relative_path} is outside root {self.root}")
+                raise PermissionError(
+                    f"Security Alert: Path {relative_path} is outside root {self.root}"
+                )
 
         requested_path = (self.root / relative_path).resolve()
 
-        # Security check 2: Path bounds verification
-        if not str(requested_path).startswith(str(self.root)):
+        # Security check 2: Path bounds verification (Robust pathlib check)
+        if not requested_path.is_relative_to(self.root):
             raise PermissionError(
                 f"Security Alert: Path traversal detected or out of bounds! {relative_path}"
             )

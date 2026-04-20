@@ -39,7 +39,7 @@ def test_delete_routing_to_trash(sandbox):
     # Setup a file in Apps
     apps_file = sandbox.apps / "test_delete.txt"
     apps_file.touch()
-    
+
     # Delete it
     sandbox.safe_delete("Apps/test_delete.txt")
 

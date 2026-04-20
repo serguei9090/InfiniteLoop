@@ -1,2 +1,2 @@
 def execute(args):
-    return {'result': 'success'}
+    return {"result": "success"}

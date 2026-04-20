@@ -1,6 +1,7 @@
 # Review Agent
 class ReviewAgent:
     """Performs code quality checks and security reviews on generated files."""
+
     def __init__(self):
         pass
 

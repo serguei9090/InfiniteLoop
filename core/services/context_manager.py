@@ -12,10 +12,10 @@ class ContextManager:
             msg.update(content)
         else:
             msg["content"] = content
-        
+
         if tool_call_id:
             msg["tool_call_id"] = tool_call_id
-            
+
         self.history.append(msg)
         self._compress_if_needed()
 
@@ -32,7 +32,7 @@ class ContextManager:
                 total_chars += len(content)
             elif isinstance(content, dict):
                 total_chars += len(str(content))
-            
+
             # Count tool calls if present
             if "tool_calls" in m:
                 total_chars += len(str(m["tool_calls"]))
@@ -63,7 +63,7 @@ class ContextManager:
             total_chars += len(str(content))
             if "tool_calls" in m:
                 total_chars += len(str(m["tool_calls"]))
-        
+
         return {
             "token_estimate": total_chars // 4,
             "message_count": len(self.history),

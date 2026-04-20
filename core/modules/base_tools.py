@@ -1,15 +1,13 @@
-import subprocess
 import platform
 import asyncio
 import os
-import shutil
 import logging
-from typing import Dict, Any, Optional, List
 from modules.sandbox import WorkspaceGuard
 from modules.context import ContextEngine
 from modules.evolution import EvolutionEngine
 
 logger = logging.getLogger(__name__)
+
 
 class BaseTools:
     """
@@ -17,6 +15,7 @@ class BaseTools:
     Provides safe filesystem and system command execution.
     Compatible with Google ADK 2.0 (supports async).
     """
+
     def __init__(
         self,
         guard: WorkspaceGuard,
@@ -44,7 +43,7 @@ class BaseTools:
             return {
                 "success": result["success"],
                 "data": result.get("message", ""),
-                "error": result.get("error")
+                "error": result.get("error"),
             }
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
@@ -91,7 +90,11 @@ class BaseTools:
             # Ensure parent directories exist
             await asyncio.to_thread(os.makedirs, safe_path.parent, exist_ok=True)
             await asyncio.to_thread(self._write_sync, safe_path, content)
-            return {"success": True, "data": f"Successfully wrote to {path}", "error": None}
+            return {
+                "success": True,
+                "data": f"Successfully wrote to {path}",
+                "error": None,
+            }
         except Exception as e:
             logger.error(f"Write Error: {e}")
             return {"success": False, "data": "", "error": str(e)}
@@ -113,7 +116,11 @@ class BaseTools:
         try:
             # We use the existing guard method for now
             self.guard.safe_delete(path)
-            return {"success": True, "data": f"Successfully moved {path} to .trash", "error": None}
+            return {
+                "success": True,
+                "data": f"Successfully moved {path} to .trash",
+                "error": None,
+            }
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
@@ -131,7 +138,11 @@ class BaseTools:
             print(f"DEBUG: create_folder called with {path}")
             safe_path = self.guard.secure_path(path, write=True)
             await asyncio.to_thread(os.makedirs, safe_path, exist_ok=True)
-            return {"success": True, "data": f"Successfully created folder {path}", "error": None}
+            return {
+                "success": True,
+                "data": f"Successfully created folder {path}",
+                "error": None,
+            }
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 
@@ -149,14 +160,14 @@ class BaseTools:
             destructive_patterns = ["rm ", "del ", "Remove-Item", "rd ", "rmdir"]
             if any(pattern in command.lower() for pattern in destructive_patterns):
                 return {
-                    "success": False, 
-                    "data": "", 
-                    "error": "Security Alert: Direct deletion via execute_cmd is forbidden."
+                    "success": False,
+                    "data": "",
+                    "error": "Security Alert: Direct deletion via execute_cmd is forbidden.",
                 }
 
             if platform.system() == "Windows":
                 # Ensure powershell usage
-                full_command = f"powershell.exe -Command \"{command}\""
+                full_command = f'powershell.exe -Command "{command}"'
             else:
                 full_command = command
 
@@ -164,15 +175,15 @@ class BaseTools:
                 full_command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.guard.root
+                cwd=self.guard.root,
             )
             stdout, stderr = await process.communicate()
-            
+
             success = process.returncode == 0
             return {
                 "success": success,
                 "data": stdout.decode(),
-                "error": stderr.decode() if not success else ""
+                "error": stderr.decode() if not success else "",
             }
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}

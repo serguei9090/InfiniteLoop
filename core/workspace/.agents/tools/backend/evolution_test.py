@@ -1,6 +1,2 @@
-
 def execute(args):
-    return {
-        'status': 'success',
-        'data': args.get('data', {})
-    }
+    return {"status": "success", "data": args.get("data", {})}

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 
+
 class DashboardStats(BaseModel):
     status: str
     active_task: Optional[str] = None
