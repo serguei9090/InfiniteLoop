@@ -56,7 +56,7 @@ export default function App() {
         case "thought":
           setThoughts(prev => [...prev, msg.data]);
           break;
-        case "tool_result":
+        case "action":
           setActions(prev => [msg.data, ...prev]);
           break;
       }
@@ -70,20 +70,16 @@ export default function App() {
     const hostAddress =
       window.location.host === "localhost:5173" ? "http://localhost:8000" : "";
 
-    // Check if task exists (for footer simple input) or came from chat
-    const currentTask = missionTask;
-
     await fetch(`${hostAddress}/task/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task: currentTask }),
+      body: JSON.stringify({ task: missionTask }),
     });
     setTask("");
   };
 
   const handleSendMessage = (content: string) => {
     setChatMessages(prev => [...prev, { role: "user", content }]);
-    // In Phase 1, we can also trigger a task from chat if it looks like a command
     if (
       content.toUpperCase().startsWith("RUN:") ||
       content.toUpperCase().startsWith("DEPLOY:")

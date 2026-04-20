@@ -146,7 +146,7 @@ class BaseTools:
             process = subprocess.run(
                 full_command,
                 shell=True,
-                cwd=self.guard.root,
+                cwd=self.guard.apps,
                 capture_output=True,
                 text=True,
                 timeout=30,

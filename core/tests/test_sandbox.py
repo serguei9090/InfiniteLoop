@@ -12,9 +12,16 @@ def sandbox():
 
 
 def test_sandbox_resolve_safe(sandbox):
-    path = sandbox.secure_path("test.txt")
+    # READ should be safe anywhere
+    path = sandbox.secure_path("test.txt", write=False)
     assert "test_workspace" in str(path)
     assert path.name == "test.txt"
+
+
+def test_sandbox_resolve_apps_write(sandbox):
+    # WRITE should be safe in Apps
+    path = sandbox.secure_path("Apps/test.txt", write=True)
+    assert "Apps" in str(path)
 
 
 def test_sandbox_traversal_attack(sandbox):
@@ -29,10 +36,24 @@ def test_sandbox_absolute_path_attack(sandbox):
 
 
 def test_delete_routing_to_trash(sandbox):
-    test_file = sandbox.root / "test_delete.txt"
-    test_file.touch()
-    sandbox.safe_delete("test_delete.txt")
+    # Setup a file in Apps
+    apps_file = sandbox.apps / "test_delete.txt"
+    apps_file.touch()
+    
+    # Delete it
+    sandbox.safe_delete("Apps/test_delete.txt")
 
     trash_path = sandbox.trash / "test_delete.txt"
-    assert not test_file.exists()
+    assert not apps_file.exists()
     assert trash_path.exists()
+
+
+def test_sandbox_apps_isolation(sandbox):
+    # Should be able to resolve/write inside Apps
+    apps_path = sandbox.secure_path("Apps/my_app.py", write=True)
+    assert "Apps" in str(apps_path)
+
+    # Should NOT be able to write outside Apps
+    with pytest.raises(PermissionError) as excinfo:
+        sandbox.secure_path("core/main.py", write=True)
+    assert "WRITE BLOCKED" in str(excinfo.value)

@@ -28,4 +28,4 @@ async def get_dashboard_metrics(request: Request) -> dict[str, Any]:
             "connections": connections
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dashboard error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Dashboard error: {str(e)}")

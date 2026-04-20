@@ -13,7 +13,7 @@ from rich.panel import Panel
 # Add parent directory to path for core imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 
-from modules.orchestrator_brain import OrchestratorBrain
+from modules.adk_agent import ADKOrchestrator
 
 import logging
 from rich.logging import RichHandler
@@ -36,16 +36,16 @@ def setup_logging(debug: bool = False):
 class InfiniteOrchestrator:
     def __init__(self, workspace_root: str = "../workspace"):
         self.workspace_root = Path(workspace_root).resolve()
-        self.brain = OrchestratorBrain(str(self.workspace_root))
+        self.brain = ADKOrchestrator(str(self.workspace_root))
     
     async def run_autoevolve(self, mission: str = None):
         """Primary loop for self-evolution."""
         title = f"EVOLVE: {mission}" if mission else "EVOLVE: Standard Maintenance"
         console.print(Panel(f"[bold green]STARTING AUTO-EVOLUTION LOOP[/bold green]\nTarget: Current Workspace", title=title, border_style="green"))
         await self.brain.initialize()
-        # Trigger the self-improvement logic from orchestrator_brain
-        result = await self.brain.run_self_improvement_loop(mission)
-        console.print(f"[bold cyan]Improvement cycle complete. Errors fixed: {result.get('errors_fixed', 0)}[/bold cyan]")
+        # Trigger the mission logic from ADK orchestrator
+        result = await self.brain.start_mission(mission)
+        console.print(f"[bold cyan]Mission cycle complete.[/bold cyan]")
 
 @click.group()
 @click.option("--workspace", default="../workspace", help="Path to workspace root")

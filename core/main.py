@@ -6,7 +6,7 @@ Provides REST and WebSocket endpoints for orchestrator brain communication.
 from typing import List, Any, Optional
 from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from services.llm_bridge import LLMBridge
@@ -84,7 +84,7 @@ llm_bridge = LLMBridge()
 
 # Import ADK orchestrator
 from modules.adk_agent import ADKOrchestrator
-orchestrator = ADKOrchestrator(workspace_root=BASE_DIR / "../workspace")
+orchestrator = ADKOrchestrator(workspace_root=BASE_DIR / "..")
 
 # Initialize orchestrator on startup
 @app.on_event("startup")
