@@ -1,22 +1,26 @@
-name: Auto Merge Jules PRs
+name: Auto-Merge Jules PRs
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
-# Explicitly grant the required permissions to the GITHUB_TOKEN
 permissions:
-  contents: write
   pull-requests: write
+  contents: write
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    # Check for the correct Jules bot username
-    if: github.event.pull_request.user.login == 'google-labs-jules[bot]' || github.event.pull_request.user.login == 'serguei9090'
+    # Look for the Jules signature in the PR description instead of checking the username
+    if: contains(github.event.pull_request.body, 'PR created automatically by Jules')
     steps:
       - name: Auto-merge PR
-        run: gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: squash
+          token: ${{ secrets.GITHUB_TOKEN }}
