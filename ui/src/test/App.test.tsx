@@ -25,6 +25,9 @@ vi.mock("lucide-react", () => ({
   Bot: () => <div data-testid="icon-bot" />,
   User: () => <div data-testid="icon-user" />,
   MessageSquare: () => <div data-testid="icon-msg" />,
+  MoveUpRight: () => <div data-testid="icon-move-up-right" />,
+  MoveDownRight: () => <div data-testid="icon-move-down-right" />,
+  MoveDownLeft: () => <div data-testid="icon-move-down-left" />,
 }));
 
 describe("App Component", () => {
@@ -41,7 +44,7 @@ describe("App Component", () => {
       screen.getByRole("heading", { name: /Mission Control/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText(/Inject commands or mission parameters/i)
+      screen.getByPlaceholderText(/Type a command or mission objective/i)
     ).toBeInTheDocument();
   });
 
