@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, Server, Database, Cpu, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Activity, Server, Database, Cpu, AlertTriangle, Clock } from "lucide-react";
 import { Typography } from "../atoms/Typography";
 import { Card } from "../molecules/Card";
 import { MetricCard } from "../molecules/MetricCard";

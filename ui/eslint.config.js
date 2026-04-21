@@ -1,4 +1,4 @@
-import js from "@eslint/js";
+import js from "@eslint/js"; // eslint-disable-line
 import globals from "globals";
 import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
