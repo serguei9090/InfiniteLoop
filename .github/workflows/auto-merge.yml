@@ -20,6 +20,6 @@ jobs:
       - name: Auto-merge PR
         # Choose ONE: --squash OR --rebase OR --merge. 
         # --auto ensures it waits for checks. --admin bypasses rules if needed.
-        run: gh pr merge "${{ github.event.pull_request.html_url }}" --auto --admin
+        run: gh pr merge "${{ github.event.pull_request.html_url }}" --auto
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
