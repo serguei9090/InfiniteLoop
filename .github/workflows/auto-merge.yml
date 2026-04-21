@@ -15,12 +15,11 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    # Look for the Jules signature in the PR description instead of checking the username
     if: contains(github.event.pull_request.body, 'PR created automatically by Jules')
     steps:
-      - name: Auto-merge PR
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          pull-request-number: ${{ github.event.pull_request.number }}
-          merge-method: squash
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Instantly merge PR
+        # Notice we dropped the --auto flag here!
+        run: gh pr merge --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
