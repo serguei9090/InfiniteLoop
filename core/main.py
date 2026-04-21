@@ -17,7 +17,7 @@ import asyncio
 from pathlib import Path
 
 # Import ADK orchestrator
-from modules.adk_agent import ADKOrchestrator
+from modules.claude_agent import ClaudeOrchestrator
 
 BASE_DIR = Path(__file__).resolve().parent
 UI_DIR = (BASE_DIR / "../ui").resolve()
@@ -131,7 +131,7 @@ class InstructionsRequest(BaseModel):
 
 # Import ADK orchestrator
 
-orchestrator = ADKOrchestrator(workspace_root=BASE_DIR / "..")
+orchestrator = ClaudeOrchestrator(workspace_root=BASE_DIR / "..")
 
 
 # Initialize orchestrator on startup
