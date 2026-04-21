@@ -34,3 +34,5 @@ graph TD
   UI --> PackageJson["package.json"]
   UI --> TailwindConfig["tailwind.config.js"]
 ```
+
+This diagram is used to check autoPR.
