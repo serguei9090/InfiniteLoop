@@ -399,6 +399,29 @@ async def websocket_endpoint(websocket: WebSocket):
 # ==================== DASHBOARD ROUTER ====================
 
 
+
+@app.post("/api/mock-ai/chat/completions")
+async def mock_ai_completion():
+    return {
+        "id": "mock-123",
+        "object": "chat.completion",
+        "created": 1677652288,
+        "model": "mock-model",
+        "choices": [{
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "This is a mock AI response. TASK_COMPLETE"
+            },
+            "finish_reason": "stop"
+        }],
+        "usage": {
+            "prompt_tokens": 9,
+            "completion_tokens": 12,
+            "total_tokens": 21
+        }
+    }
+
 app.include_router(dashboard_router)
 
 

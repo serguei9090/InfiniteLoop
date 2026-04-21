@@ -7,6 +7,7 @@ import { DashboardHeader } from "./components/organisms/DashboardHeader";
 import { MissionControl } from "./components/organisms/MissionControl";
 import { LogicStream } from "./components/organisms/LogicStream";
 import { ActionLedger } from "./components/organisms/ActionLedger";
+import { SkillTree } from "./components/organisms/SkillTree";
 import { StatusVisualizer } from "./components/molecules/StatusVisualizer";
 import { Button } from "./components/atoms/Button";
 
@@ -48,7 +49,7 @@ export default function App() {
       switch (msg.type) {
         case "status":
           setStatus(msg.data);
-          if (msg.data.state === "Idle") setMetrics({ tps: 0 });
+          if (msg.data.state === "Idle") setMetrics({ tps: 0, input_tokens: 0, output_tokens: 0, total_tokens: 0 });
           break;
         case "metrics":
           setMetrics(msg.data);
@@ -84,7 +85,7 @@ export default function App() {
       content.toUpperCase().startsWith("RUN:") ||
       content.toUpperCase().startsWith("DEPLOY:")
     ) {
-      handleRunTask(content.split(":")[1].trim());
+      handleRunTask((content.split(":")[1] || "").trim());
     }
   };
 
@@ -106,11 +107,17 @@ export default function App() {
         />
       }
       content={
+
         <div className="flex flex-col gap-6 h-full">
           <StatusVisualizer state={status.state} />
           <div className="flex-1 flex gap-6 min-h-0">
-            <LogicStream thoughts={thoughts} />
-            <ActionLedger actions={actions} />
+            <div className="flex-1 flex flex-col gap-6">
+               <LogicStream thoughts={thoughts} />
+               <ActionLedger actions={actions} />
+            </div>
+            <div className="w-[400px]">
+               <SkillTree />
+            </div>
           </div>
         </div>
       }
