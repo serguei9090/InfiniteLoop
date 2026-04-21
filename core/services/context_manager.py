@@ -47,6 +47,17 @@ class ContextManager:
                 del self.history[2]
                 self._compress_if_needed()  # Recurse if still too big
 
+    def truncate_from_left(self, num_messages: int = 1):
+        """
+        Safely truncate older context messages from the left,
+        preserving the system prompt (index 0) and initial task (index 1).
+        """
+        for _ in range(num_messages):
+            if len(self.history) > 3:
+                del self.history[2]
+            else:
+                break
+
     def get_messages(self) -> List[Dict[str, Any]]:
         return self.history
 

@@ -58,9 +58,17 @@ BOUNDARIES:
 - workspace/  : READ-WRITE. Your exclusive development sandbox. All work happens here.
 - Pathing: All paths MUST be relative to workspace/ root. The runner handles resolution.
 
-REASONING:
-1. <|think|> block mandatory. Surgical step-by-step breakdown.
+MULTI-AGENT ORCHESTRATION:
+- We operate a multi-AI orchestrator (GeminiAI, Codex, Qwen, Jules, Local AI).
+- Task routing is automatic via the backend for coding, chat, and handoff categories.
+- Fallback/mock AIs are in place for validation and fault tolerance.
+- Context truncation from the left is enabled to maintain token bounds.
+- All dynamic tools and skill modules operate in HOT MODE (can be enabled/disabled at runtime).
+
+REASONING & VALIDATION CRITERIA:
+1. <|think|> block mandatory. Surgical step-by-step breakdown. Review requirements deeply.
 2. Read before Write. Verify assumptions with tools before acting.
+3. Validate your logic before answering. Ensure no syntax errors or breaking changes are introduced.
 
 PROTOCOL:
 - Output tool calls in a single JSON block.

@@ -28,6 +28,7 @@ class ToolDefinition:
     is_dynamic: bool = False
     created_at: float = field(default_factory=time.time)
     last_used: float = field(default_factory=time.time)
+    enabled: bool = True
 
 
 class ToolRegistry:
@@ -278,6 +279,34 @@ class ToolRegistry:
     def get_tool(self, name: str) -> Optional[ToolDefinition]:
         """Get a tool definition by name."""
         return self._tools.get(name)
+
+    async def enable_tool(self, name: str) -> Dict[str, Any]:
+        """Enable a registered tool."""
+        async with self._lock:
+            if name in self._tools:
+                self._tools[name].enabled = True
+                self.adaptation_log.append({
+                    "event": "tool_enabled",
+                    "name": name,
+                    "timestamp": time.time()
+                })
+                logger.info(f"Enabled tool: {name}")
+                return {"success": True, "message": f"Tool '{name}' enabled successfully"}
+            return {"success": False, "error": f"Tool '{name}' not found"}
+
+    async def disable_tool(self, name: str) -> Dict[str, Any]:
+        """Disable a registered tool."""
+        async with self._lock:
+            if name in self._tools:
+                self._tools[name].enabled = False
+                self.adaptation_log.append({
+                    "event": "tool_disabled",
+                    "name": name,
+                    "timestamp": time.time()
+                })
+                logger.info(f"Disabled tool: {name}")
+                return {"success": True, "message": f"Tool '{name}' disabled successfully"}
+            return {"success": False, "error": f"Tool '{name}' not found"}
 
     async def remove_tool(self, name: str) -> Dict[str, Any]:
         """Remove a tool from the registry."""
