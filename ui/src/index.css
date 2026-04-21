@@ -5,27 +5,27 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-surface-50 text-slate-900 font-sans antialiased overflow-hidden;
-  }
+	body {
+		@apply bg-surface-50 text-slate-900 font-sans antialiased overflow-hidden;
+	}
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-white border border-slate-200 shadow-md backdrop-blur-md rounded-2xl;
-  }
+	.glass-panel {
+		@apply bg-white border border-slate-200 shadow-md backdrop-blur-md rounded-2xl;
+	}
 
-  .glass-button {
-    @apply cursor-pointer border-none outline-none;
-  }
+	.glass-button {
+		@apply cursor-pointer border-none outline-none;
+	}
 
-  .custom-scrollbar::-webkit-scrollbar {
-    @apply w-1.5;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full;
-  }
+	.custom-scrollbar::-webkit-scrollbar {
+		@apply w-1.5;
+	}
+	.custom-scrollbar::-webkit-scrollbar-track {
+		@apply bg-transparent;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		@apply bg-slate-300 rounded-full;
+	}
 }
