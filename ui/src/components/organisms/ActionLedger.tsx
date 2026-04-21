@@ -1,81 +1,49 @@
-import { Terminal } from "lucide-react";
-import { Typography } from "../atoms/Typography";
-import { Badge } from "../atoms/Badge";
+import { TerminalSquare, FileEdit, Trash2, Search, Play } from "lucide-react";
 
-interface Action {
-  success: boolean;
-  output?: string;
-  error?: string;
-}
+export function ActionLedger({ actions }: { actions: any[] }) {
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "read_file":
+      case "list_files": return <Search size={14} className="text-blue-500" />;
+      case "edit_file":
+      case "create_file": return <FileEdit size={14} className="text-emerald-500" />;
+      case "delete_file": return <Trash2 size={14} className="text-red-500" />;
+      case "run_command": return <Play size={14} className="text-amber-500" />;
+      default: return <TerminalSquare size={14} className="text-slate-500" />;
+    }
+  };
 
-interface ActionLedgerProps {
-  actions: Action[];
-}
-
-export const ActionLedger = ({ actions }: ActionLedgerProps) => {
   return (
-    <div className="glass-panel rounded-3xl flex-1 flex flex-col overflow-hidden group">
-      <header className="p-6 flex justify-between items-center border-b border-white/10 bg-white/[0.02]">
-        <div className="flex items-center gap-3">
-          <Terminal className="w-5 h-5 text-blue-400" />
-          <Typography variant="h1" className="text-sm">
-            Action Ledger
-          </Typography>
-        </div>
-        <Badge variant="info" className="font-mono px-3 py-1">
-          TOTAL OPS: {actions.length}
-        </Badge>
-      </header>
-
-      <div className="p-6 flex-1 overflow-y-auto flex flex-col gap-4 custom-scrollbar scroll-smooth">
+    <div className="h-full glass-panel flex flex-col overflow-hidden border-slate-200">
+      <div className="bg-slate-50 border-b border-slate-200 p-3 flex items-center gap-2 shrink-0">
+        <TerminalSquare size={16} className="text-accent" />
+        <span className="text-xs font-bold text-slate-700 tracking-wider uppercase">Action Ledger</span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 custom-scrollbar flex flex-col gap-1 bg-white">
         {actions.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center gap-4 opacity-20">
-            <Terminal className="w-10 h-10" />
-            <Typography variant="caption" className="text-sm font-bold">
-              Systems Ready for Operations
-            </Typography>
-          </div>
+           <div className="text-slate-400 text-xs italic flex items-center justify-center h-full">No actions recorded</div>
         ) : (
-          actions.map((act, i) => (
-            <div
-              key={i}
-              className="bg-black/40 border border-white/10 rounded-2xl p-6 animate-in fade-in slide-in-from-right-3 duration-500 hover:border-white/20 transition-all shadow-xl"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <Badge
-                  variant={act.success ? "success" : "danger"}
-                  className="px-3 py-1"
-                >
-                  {act.success ? "SUCCESS" : "FAILURE"}
-                </Badge>
-                <Typography
-                  variant="code"
-                  className="text-neutral-500 font-bold"
-                >
-                  OP_{actions.length - i}
-                </Typography>
+          actions.map((action, i) => (
+            <div key={i} className="flex flex-col gap-1 p-2 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-100 transition-colors">
+              <div className="flex items-center gap-2">
+                {getIcon(action.tool)}
+                <span className="text-xs font-bold text-slate-700 font-mono">{action.tool}</span>
+                <span className="text-[10px] text-slate-400 ml-auto font-mono">#{actions.length - i}</span>
               </div>
-              <Typography
-                variant="code"
-                className="text-neutral-300 text-[13px] leading-relaxed break-all line-clamp-4 hover:line-clamp-none transition-all cursor-help bg-black/20 p-4 rounded-xl border border-white/5"
-              >
-                {act.output || act.error}
-              </Typography>
+              <div className="text-[10px] text-slate-500 font-mono truncate pl-6">
+                {JSON.stringify(action.args)}
+              </div>
+              {action.result && (
+                <div className="mt-1 pl-6">
+                  <div className="text-[10px] bg-slate-800 text-slate-300 p-1.5 rounded border border-slate-700 max-h-20 overflow-y-auto custom-scrollbar font-mono break-all">
+                    {action.result}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
-
-      <footer className="p-3 border-t border-white/5 bg-black/20">
-        <div className="flex justify-between items-center opacity-40 hover:opacity-100 transition-opacity">
-          <Typography variant="code" className="text-[8px]">
-            LOG_BUFFER_STATUS: STABLE
-          </Typography>
-          <Typography variant="code" className="text-[8px]">
-            0.00kb/s
-          </Typography>
-        </div>
-      </footer>
     </div>
   );
-};
+}
