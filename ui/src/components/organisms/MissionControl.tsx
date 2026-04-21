@@ -1,121 +1,87 @@
-import { useRef, useEffect, useState } from "react";
-import { MessageSquare, Send, Bot } from "lucide-react";
-import { Typography } from "../atoms/Typography";
-import { ChatMessage } from "../molecules/ChatMessage";
-
-interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+import { useState, useRef, useEffect } from "react";
+import { Send, Bot, User, Activity } from "lucide-react";
 
 interface MissionControlProps {
-  messages: Message[];
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
   isThinking: boolean;
   onSendMessage: (msg: string) => void;
 }
 
-export const MissionControl = ({
-  messages,
-  isThinking,
-  onSendMessage,
-}: MissionControlProps) => {
+export function MissionControl({ messages, isThinking, onSendMessage }: MissionControlProps) {
   const [input, setInput] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isThinking]);
 
-  const handleSubmit = () => {
+  const handleSend = () => {
     if (!input.trim()) return;
     onSendMessage(input);
     setInput("");
   };
 
   return (
-    <div className="w-[450px] flex flex-col border-l border-white/5 bg-neutral-900/40 relative">
-      <header className="p-8 border-b border-white/10 flex items-center justify-between bg-black/20 backdrop-blur-md">
-        <div>
-          <div className="flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-violet-400" />
-            <Typography variant="h2" weight="black" className="text-white">
-              Mission Control
-            </Typography>
-          </div>
-          <Typography variant="caption" className="text-neutral-500 mt-1">
-            Direct Neural Overlink
-          </Typography>
+    <div className="flex-1 flex flex-col glass-panel overflow-hidden border-slate-200">
+      <div className="bg-slate-50 border-b border-slate-200 p-3 flex items-center justify-between z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs font-bold text-slate-700 tracking-wider uppercase">Mission Control</span>
         </div>
-        <div className="flex gap-2 bg-black/40 p-2 rounded-full px-4 border border-white/10">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse"></div>
-          <div className="w-2 h-2 rounded-full bg-blue-500/30"></div>
-          <div className="w-2 h-2 rounded-full bg-violet-500/30"></div>
-        </div>
-      </header>
-
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-8 flex flex-col gap-8 custom-scrollbar scroll-smooth neural-stream"
-      >
-        {messages.map((msg, i) => (
-          <ChatMessage key={i} {...msg} />
-        ))}
-
-        {isThinking && (
-          <div className="flex flex-col items-start opacity-70 animate-pulse">
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="w-4 h-4 text-violet-400" />
-              <Typography
-                variant="caption"
-                className="font-semibold text-violet-400"
-              >
-                Core_Thought_Streaming...
-              </Typography>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-6 rounded-3xl rounded-tl-none w-48 h-16 shadow-inner" />
-          </div>
-        )}
       </div>
 
-      <footer className="p-8 bg-gradient-to-t from-black/40 to-transparent">
-        <div className="relative group">
-          <textarea
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar bg-white">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              msg.role === "user" ? "bg-accent text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+            }`}>
+              {msg.role === "user" ? <User size={14} /> : <Bot size={14} />}
+            </div>
+            <div className={`max-w-[85%] rounded-2xl p-3 text-sm ${
+              msg.role === "user"
+                ? "bg-accent text-white rounded-tr-none"
+                : "bg-slate-50 text-slate-700 border border-slate-100 rounded-tl-none shadow-sm"
+            }`}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+        {isThinking && (
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-accent flex items-center justify-center shrink-0">
+              <Activity size={14} className="animate-spin" />
+            </div>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none p-3 text-sm text-slate-500 flex items-center gap-2">
+              <span className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </span>
+            </div>
+          </div>
+        )}
+        <div ref={endOfMessagesRef} />
+      </div>
+
+      <div className="p-3 bg-white border-t border-slate-100">
+        <div className="relative flex items-center">
+          <input
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-            placeholder="Type a command or mission objective..."
-            className="w-full bg-neutral-800/50 border-2 border-white/5 rounded-3xl px-6 py-5 text-sm outline-none focus:border-violet-500/40 focus:bg-neutral-800/80 transition-all min-h-[140px] resize-none pr-16 text-neutral-100 placeholder:text-neutral-600 font-medium shadow-2xl"
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Enter command (e.g., RUN: test_task)"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-slate-700"
           />
           <button
-            onClick={handleSubmit}
-            disabled={!input.trim()}
-            className="absolute bottom-5 right-5 p-3.5 bg-violet-600 text-white rounded-2xl hover:bg-violet-500 transition-all disabled:opacity-20 shadow-2xl active:scale-90"
+            onClick={handleSend}
+            disabled={!input.trim() || isThinking}
+            className="absolute right-2 p-1.5 bg-accent hover:bg-accent-dark text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <Send className="w-5 h-5" />
+            <Send size={16} />
           </button>
         </div>
-        <div className="mt-5 flex justify-between items-center px-2">
-          <Typography
-            variant="caption"
-            className="text-[9px] text-neutral-600 font-black"
-          >
-            STRIKE_MODE: ENABLED
-          </Typography>
-          <Typography
-            variant="code"
-            className="text-[9px] text-neutral-700 font-bold"
-          >
-            RSA_VERIFIED // 4096_BIT
-          </Typography>
-        </div>
-      </footer>
+      </div>
     </div>
   );
-};
+}

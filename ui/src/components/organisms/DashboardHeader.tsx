@@ -1,86 +1,69 @@
-import { Cpu, Activity, Zap, MoveUpRight, MoveDownLeft } from "lucide-react";
-import { Typography } from "../atoms/Typography";
-import { MetricCard } from "../molecules/MetricCard";
-import { Badge } from "../atoms/Badge";
+import { Activity, Zap, Cpu, Hash } from "lucide-react";
 
-interface DashboardHeaderProps {
-  tps: number;
-  retry: number;
-  inputTokens?: number;
-  outputTokens?: number;
-}
-
-export const DashboardHeader = ({
+export function DashboardHeader({
   tps,
   retry,
-  inputTokens = 0,
-  outputTokens = 0,
-}: DashboardHeaderProps) => {
+  inputTokens,
+  outputTokens,
+}: {
+  tps: number;
+  retry: number;
+  inputTokens: number;
+  outputTokens: number;
+}) {
   return (
-    <div className="glass-panel rounded-3xl p-8 flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-6">
-          <div className="p-4 bg-violet-600 rounded-2xl shadow-2xl shadow-violet-600/30">
-            <Cpu className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <Typography
-              variant="h1"
-              weight="black"
-              className="flex items-center gap-3"
-            >
-              IMMUTABLE CORE
-              <Badge variant="info" className="text-[10px] py-1 px-3">
-                v0.1.0
-              </Badge>
-            </Typography>
-            <Typography
-              variant="body"
-              className="mt-1 text-neutral-400 font-medium"
-            >
-              Autonomous Systems Management Dashboard
-            </Typography>
-          </div>
+    <div className="grid grid-cols-4 gap-4 mb-2">
+      <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
+        <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+          <Activity size={80} />
         </div>
+        <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
+          <Activity size={14} className="text-accent" />
+          Speed
+        </div>
+        <div className="text-2xl font-black text-slate-800 tracking-tighter">
+          {tps.toFixed(1)} <span className="text-sm font-bold text-slate-400">t/s</span>
+        </div>
+      </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center bg-black/40 p-2 rounded-2xl border border-white/10">
-            <MetricCard
-              label="INPUT"
-              value={inputTokens}
-              unit="T"
-              icon={MoveUpRight}
-              color="text-neutral-500"
-            />
-            <div className="w-px h-10 bg-white/10 mx-2" />
-            <MetricCard
-              label="OUTPUT"
-              value={outputTokens}
-              unit="T"
-              icon={MoveDownLeft}
-              color="text-neutral-500"
-            />
-          </div>
+      <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
+        <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+          <Zap size={80} />
+        </div>
+        <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
+          <Zap size={14} className={retry > 0 ? "text-amber-500" : "text-emerald-500"} />
+          Reflexion
+        </div>
+        <div className="text-2xl font-black text-slate-800 tracking-tighter">
+          {retry} <span className="text-sm font-bold text-slate-400">retries</span>
+        </div>
+      </div>
 
-          <div className="flex items-center bg-black/40 p-2 rounded-2xl border border-white/10">
-            <MetricCard
-              label="THROUGHPUT"
-              value={tps}
-              unit="TPS"
-              icon={Activity}
-              color="text-emerald-400"
-            />
-            <div className="w-px h-10 bg-white/10 mx-2" />
-            <MetricCard
-              label="RETRY POOL"
-              value={retry}
-              unit="/ 3"
-              icon={Zap}
-              color="text-violet-400"
-            />
-          </div>
+      <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
+        <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+          <Hash size={80} />
+        </div>
+        <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
+          <Hash size={14} className="text-blue-400" />
+          Input
+        </div>
+        <div className="text-2xl font-black text-slate-800 tracking-tighter">
+          {inputTokens.toLocaleString()} <span className="text-sm font-bold text-slate-400">tok</span>
+        </div>
+      </div>
+
+      <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
+        <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+          <Cpu size={80} />
+        </div>
+        <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
+          <Cpu size={14} className="text-purple-500" />
+          Output
+        </div>
+        <div className="text-2xl font-black text-slate-800 tracking-tighter">
+          {outputTokens.toLocaleString()} <span className="text-sm font-bold text-slate-400">tok</span>
         </div>
       </div>
     </div>
   );
-};
+}
