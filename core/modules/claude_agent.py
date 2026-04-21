@@ -1,9 +1,9 @@
 """
-ADK Orchestrator - Google ADK 2.0 based Autonomous Agent
-PURPOSE: Drive the InfiniteLoop mission using standardized ADK workflows.
+Claude Orchestrator - Agent SDK based Autonomous Agent
+PURPOSE: Drive the InfiniteLoop mission using standardized Claude Agent workflows.
 CONTRACT:
-- initialize(): Builds the LlmAgent with the Immutable Core v4 toolset.
-- start_mission(mission_text): Executes a mission via the ADK runner.
+- initialize(): Builds the Claude SDK client with the Immutable Core v4 toolset.
+- start_mission(mission_text): Executes a mission via the Claude Agent SDK query.
 - run_self_improvement_loop(): Triggers the auto-adaptation engine.
 """
 
@@ -13,10 +13,10 @@ import time
 import os
 from typing import Dict, Any, List, Optional, Callable
 from pathlib import Path
-from google.adk.agents.llm_agent import LlmAgent
-from google.adk.runners import InMemoryRunner
-from google.adk.models.lite_llm import LiteLlm
-from google.genai import types
+
+from claude_agent_sdk import query, create_sdk_mcp_server, tool
+from claude_agent_sdk.types import ClaudeAgentOptions, AssistantMessage, StreamEvent
+
 from modules.base_tools import BaseTools
 from modules.sandbox import WorkspaceGuard
 from modules.context import ContextEngine
@@ -26,7 +26,7 @@ from modules.auto_adaptation import AutoAdaptationEngine
 logger = logging.getLogger(__name__)
 
 
-class ADKOrchestrator:
+class ClaudeOrchestrator:
     def __init__(self, workspace_root: str = ".", target_workspace: str = "workspace"):
         self.project_root = Path(workspace_root).resolve()
         
@@ -49,10 +49,6 @@ class ADKOrchestrator:
         self.task_active = False
         self.current_task: Optional[str] = None
 
-        # ADK Components
-        self.agent: Optional[LlmAgent] = None
-        self.runner: Optional[InMemoryRunner] = None
-
         # Callbacks
         self.status_callback: Optional[Callable] = None
         self.thought_callback: Optional[Callable] = None
@@ -63,41 +59,35 @@ class ADKOrchestrator:
         self.event_history: List[Any] = []
         self.start_time = time.time()
 
+        self.custom_mcp_server = None
+
     async def initialize(self) -> Dict[str, Any]:
-        """Build the ADK Agent with the v4 toolset."""
-        if not self.runner:
-            logger.info("Initializing ADK Orchestrator [IMMUTABLE CORE v4]...")
+        """Build the Claude Agent dependencies with the v4 toolset."""
+        logger.info("Initializing Claude Orchestrator [IMMUTABLE CORE v4]...")
 
-            # Configure LiteLLM (defaults for LM Studio)
-            os.environ.setdefault("OPENAI_API_BASE", "http://127.0.0.1:1234/v1")
-            os.environ.setdefault("OPENAI_API_KEY", "lm-studio")
+        # Configure defaults for LM Studio
+        os.environ.setdefault("ANTHROPIC_BASE_URL", "http://127.0.0.1:1234/v1")
+        os.environ.setdefault("ANTHROPIC_API_KEY", "lm-studio")
 
-            self.agent = LlmAgent(
-                name="IMMUTABLE_CORE_ORCHESTRATOR",
-                description="Autonomous mission-critical orchestrator for InfiniteLoop.",
-                instruction=self._get_base_instructions(),
-                tools=[
-                    self.base_tools.read_file,
-                    self.base_tools.write_file,
-                    self.base_tools.delete_file,
-                    self.base_tools.create_folder,
-                    self.base_tools.execute_cmd,
-                    self.base_tools.glob_search,
-                    self.base_tools.grep_search,
-                    self.base_tools.web_fetch,
-                    self.base_tools.create_new_tool,
-                ],
-                model=LiteLlm(model="openai/qwen3.5-9b"),
-            )
+        # Create MCP server for custom tools
+        @tool("create_new_tool", "Creates and registers a new dynamic tool.", {"name": str, "code": str, "schema": str})
+        async def sdk_create_new_tool(args):
+            result = await self.base_tools.create_new_tool(args["name"], args["code"], args["schema"])
+            is_error = not result["success"]
+            return {"content": [{"type": "text", "text": str(result)}], "is_error": is_error}
 
-            self.runner = InMemoryRunner(agent=self.agent, app_name="InfiniteLoop")
-            logger.info("ADK Agent initialized with v4 boundaries.")
+        self.custom_mcp_server = create_sdk_mcp_server(
+            name="core_custom",
+            version="1.0.0",
+            tools=[sdk_create_new_tool]
+        )
 
-        return {"success": True, "message": "ADK Orchestrator v4 ready"}
+        logger.info("Claude Agent initialized with v4 boundaries.")
+        return {"success": True, "message": "Claude Orchestrator v4 ready"}
 
     async def start_mission(self, mission_text: str) -> Dict[str, Any]:
-        """Run the ADK mission loop."""
-        if not self.runner:
+        """Run the Claude SDK mission loop."""
+        if not self.custom_mcp_server:
             await self.initialize()
 
         self.task_active = True
@@ -106,52 +96,46 @@ class ADKOrchestrator:
         try:
             logger.info(f"Starting mission: {mission_text}")
 
-            new_message = types.Content(
-                role="user", parts=[types.Part(text=mission_text)]
+            options = ClaudeAgentOptions(
+                allowed_tools=["Read", "Write", "Edit", "Bash", "Glob", "Grep", "WebFetch", "WebSearch", "AskUserQuestion", "Monitor"],
+                mcp_servers={"core_custom": self.custom_mcp_server},
+                system_prompt=self._get_base_instructions(),
+                cwd=self.workspace_root
             )
 
-            session_id = "default_session"
-            user_id = "default_user"
-
-            # Check/Create session
-            session = await self.runner.session_service.get_session(
-                app_name=self.runner.app_name, user_id=user_id, session_id=session_id
-            )
-            if not session:
-                await self.runner.session_service.create_session(
-                    app_name=self.runner.app_name,
-                    user_id=user_id,
-                    session_id=session_id,
-                )
-
-            async for event in self.runner.run_async(
-                user_id=user_id, session_id=session_id, new_message=new_message
-            ):
-                self.event_history.append(event)
+            async for message in query(prompt=mission_text, options=options):
+                self.event_history.append(message)
                 if len(self.event_history) > 100:
                     self.event_history.pop(0)
 
                 # Output processing
-                if event.content and event.content.parts:
-                    content_str = "".join(
-                        [p.text for p in event.content.parts if p.text]
-                    )
-                    if content_str and event.author == "model":
-                        await self._emit_thought(content_str)
+                if isinstance(message, AssistantMessage):
+                    if hasattr(message, "content") and isinstance(message.content, list):
+                        for block in message.content:
+                            if hasattr(block, "type"):
+                                if block.type == "text" and hasattr(block, "text"):
+                                    await self._emit_thought(block.text)
+                                elif block.type == "thinking" and hasattr(block, "thinking"):
+                                    await self._emit_thought(block.thinking)
 
-                # Tool call processing
-                if event.actions:
-                    await self._emit_action(
-                        event.actions.to_dict()
-                        if hasattr(event.actions, "to_dict")
-                        else str(event.actions)
-                    )
+                elif isinstance(message, StreamEvent):
+                    if hasattr(message, "delta") and hasattr(message.delta, "type"):
+                        if message.delta.type == "text_delta" and hasattr(message.delta, "text"):
+                            await self._emit_thought(message.delta.text)
+                    if hasattr(message, "event_type") and message.event_type == "tool_use":
+                        await self._emit_action({"tool": getattr(message, "tool_name", "unknown")})
 
-            logger.info("ADK Mission Complete.")
+                # Check for ToolUseBlock in AssistantMessage
+                if isinstance(message, AssistantMessage) and hasattr(message, "content") and isinstance(message.content, list):
+                    for block in message.content:
+                        if hasattr(block, "type") and block.type == "tool_use":
+                            await self._emit_action({"name": block.name, "input": block.input})
+
+            logger.info("Claude Mission Complete.")
             return {"success": True, "message": "Mission ended successfully"}
 
         except Exception as e:
-            logger.exception(f"ADK Execution Error: {e}")
+            logger.exception(f"Claude Execution Error: {e}")
             return {"success": False, "error": str(e)}
         finally:
             self.task_active = False
@@ -160,7 +144,7 @@ class ADKOrchestrator:
         return f"""[IMMUTABLE CORE v4]
 ENVIRONMENT: Windows (PowerShell). 
 - COMMANDS: Use 'dir', 'type', 'Get-ChildItem'.
-- DIRECTORIES: Use 'create_folder' tool before writing files to new paths.
+- DIRECTORIES: Use 'Bash' tool to execute PowerShell commands.
 - SYNTAX: Avoid Linux-style chaining (&&, ||, 2>&1). PowerShell uses ';' for chaining and 'Test-Path' for checks.
 - PATHS: All paths MUST be relative to {self.workspace_dir_name}/ root. Use forward slashes '/' for compatibility.
 
@@ -172,7 +156,6 @@ BOUNDARIES:
 REASONING:
 1. <|think|> block mandatory. 
 2. Read/Verify before acting.
-3. Use 'compressed' mode for large files.
 
 TERMINATION: Output "TASK_COMPLETE" when finished.
 """
@@ -221,7 +204,7 @@ TERMINATION: Output "TASK_COMPLETE" when finished.
             "status": "online",
             "task_active": self.task_active,
             "current_task": self.current_task,
-            "tools_count": len(self.agent.tools) if self.agent else 0,
+            "tools_count": 11,  # Approximate base count
             "uptime": int(time.time() - self.start_time),
         }
 
