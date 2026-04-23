@@ -6,6 +6,7 @@ The consolidated, professional entry point for the orchestrator.
 import asyncio
 import click
 import sys
+import os
 from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
@@ -13,7 +14,7 @@ from rich.panel import Panel
 # Add parent directory to path for core imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 
-from modules.adk_agent import ADKOrchestrator
+from modules.brain import BrainOrchestrator
 
 import logging
 from rich.logging import RichHandler
@@ -45,25 +46,25 @@ class InfiniteOrchestrator:
         if workspace_root is None:
             workspace_root = str(PROJECT_ROOT)
         self.workspace_root = Path(workspace_root).resolve()
-        self.brain = ADKOrchestrator(workspace_root=str(self.workspace_root), target_workspace=target_workspace)
+        self.brain = BrainOrchestrator(workspace_root=str(self.workspace_root), target_workspace=target_workspace)
 
     async def run_evolve(self, mission: str = None):
-        """Primary loop for evolution via ADK."""
-        mode = "SELF-EVOLUTION" if self.brain.workspace_dir_name == "workspace" else f"APP-BUILDING: {self.brain.workspace_dir_name}"
+        """Primary loop for evolution via Hybrid Architecture."""
+        mode = "SELF-EVOLUTION" if self.brain.target_workspace == "workspace" else f"APP-BUILDING: {self.brain.target_workspace}"
         title = f"EVOLVE [{mode}]: {mission}" if mission else f"EVOLVE [{mode}]: Standard Maintenance"
         
         console.print(
             Panel(
-                f"[bold green]STARTING ADK EVOLUTION LOOP[/bold green]\nTarget Workspace: [cyan]{self.brain.workspace_root}[/cyan]",
+                f"[bold green]STARTING HYBRID EVOLUTION LOOP[/bold green]\nTarget Workspace: [cyan]{self.brain.workspace_root}[/cyan]",
                 title=title,
                 border_style="green",
             )
         )
 
-        # Initialize ADK
+        # Initialize
         await self.brain.initialize()
 
-        # Trigger the mission logic from ADK orchestrator
+        # Trigger the mission logic
         await self.brain.start_mission(
             mission or "Self-Evolution: Standard optimization and health check."
         )
@@ -79,17 +80,15 @@ class InfiniteOrchestrator:
 )
 @click.pass_context
 def main(ctx, workspace, debug):
-    """IMMUTABLE CORE CLI - Autonomous Intelligence Orchestrator"""
-    # Fix for Windows Unicode output crashes
+    """IMMUTABLE CORE CLI - Hybrid Autonomous Orchestrator"""
     if sys.platform == "win32":
         try:
             sys.stdout.reconfigure(encoding="utf-8")
             sys.stderr.reconfigure(encoding="utf-8")
         except (AttributeError, Exception):
-            pass  # Fallback for non-standard streams
+            pass
 
     setup_logging(debug)
-    # We delay orchestrator creation to the command level to handle flags
     ctx.ensure_object(dict)
     ctx.obj['workspace_root'] = workspace
 
@@ -109,6 +108,11 @@ def evolve(ctx, mission, is_self, app):
     """Launch the evolution loop for the IMMUTABLE CORE app or a user application."""
     target = "workspace" if is_self else f"UserWorkspace/{app}"
     orchestrator = InfiniteOrchestrator(ctx.obj['workspace_root'], target_workspace=target)
+
+    # Configure env vars for PydanticAI / LiteLLM Proxy
+    os.environ["OPENAI_API_KEY"] = "test"
+    os.environ["OPENAI_BASE_URL"] = "http://127.0.0.1:4000/v1"
+
     asyncio.run(orchestrator.run_evolve(mission))
 
 

@@ -11,7 +11,8 @@ Build a fully autonomous, local-only coding agent capable of auto-evolving its o
 - **Frontend State**: Zustand.
 - **Backend (Core)**: Python (FastAPI).
 - **Data Validation**: Pydantic (Backend) / Zod (Frontend).
-- **AI Orchestration**: Google Gen AI SDK (compatible with OpenAI spec).
+- **AI Orchestration**: Hybrid Stack (PydanticAI for Planning/Validation, SmolAgents for Execution).
+- **API Proxy**: LiteLLM (bridges OpenAI schema to target models).
 - **Local LLM Provider**: LM Studio (http://127.0.0.1:1234/v1).
 - **Language**: TypeScript (Node/Bun) or Python.
 

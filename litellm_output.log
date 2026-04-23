@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.14/site-packages/litellm/proxy/proxy_server.py", line 149, in <module>
+    import backoff
+ModuleNotFoundError: No module named 'backoff'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/.venv/bin/litellm", line 10, in <module>
+    sys.exit(run_server())
+             ~~~~~~~~~~^^
+  File "/app/.venv/lib/python3.14/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.14/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "/app/.venv/lib/python3.14/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.14/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/app/.venv/lib/python3.14/site-packages/litellm/proxy/proxy_cli.py", line 651, in run_server
+    raise e
+  File "/app/.venv/lib/python3.14/site-packages/litellm/proxy/proxy_cli.py", line 638, in run_server
+    from .proxy_server import (
+    ...<4 lines>...
+    )
+  File "/app/.venv/lib/python3.14/site-packages/litellm/proxy/proxy_server.py", line 155, in <module>
+    raise ImportError(f"Missing dependency {e}. Run `pip install 'litellm[proxy]'`")
+ImportError: Missing dependency No module named 'backoff'. Run `pip install 'litellm[proxy]'`
