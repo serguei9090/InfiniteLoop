@@ -52,4 +52,4 @@ def test_evolution_successful_registration(evolution_engine, tmp_path):
         assert (Path(evolution_engine.tools_dir) / "math_tool" / "math_tool.json").exists()
     else:
         # If it failed due to uv missing, that's okay for local dev but we should know.
-        print(f"Registration failed: {result['error']}")
+        pass

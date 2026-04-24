@@ -26,10 +26,7 @@ class ToolEngine:
             if not json_blocks:
                 json_blocks = re.findall(r"(\{.*?\})", tool_call_json, re.DOTALL)
 
-            if json_blocks:
-                clean_json = json_blocks[0]
-            else:
-                clean_json = tool_call_json.strip()
+            clean_json = json_blocks[0] if json_blocks else tool_call_json.strip()
 
             data = json.loads(clean_json, strict=False)
             tool_name = data.get("tool")

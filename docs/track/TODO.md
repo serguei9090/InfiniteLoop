@@ -1,3 +1,5 @@
+> 📊 Last audited: 2026-04-24 — see [project-report-2026-04-24.md]
+
 # TODO: Project Intelligence Refactor (OP_CLEAN_BRAIN_V1)
 
 ## Phase 1: Thinking Logic Extraction
@@ -20,3 +22,12 @@
 ## Phase 4: Final Validation
 - [ ] Run full test suite.
 - [ ] Verify "Observer UI" correctly displays monologue during complex tasks.
+
+## Post-Audit Action Items (2026-04-24)
+- [x] TODO(lint_fix_001): Fix all critical lint errors in core.
+- [x] TODO(lint_fix_002): Fix frontend Biome dependency hooks warnings.
+- [ ] TODO(coverage_001-014): Raise test coverage for `core` to ≥ 80%.
+- [x] TODO(dry_001): Resolve top DRY violation in `FloatingMenu.tsx`.
+- [x] TODO(dry_002): Resolve Python SIM rules violations across core.
+- [x] TODO(anti_pattern_001): Remove `print` and `console.log` statements.
+- [ ] TODO(todoc_001): Complete TODOC stubs for `TODO: Connect to backend endpoint`.

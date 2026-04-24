@@ -1,6 +1,5 @@
 import logging
 import os
-import inspect
 from typing import Dict, Any, List
 
 from smolagents import Tool, CodeAgent, LiteLLMModel

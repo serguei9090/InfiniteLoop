@@ -50,8 +50,7 @@ class EvolutionEngine:
                                 "success": False,
                                 "error": f"Illegal import detected: {alias.name}",
                             }
-                if isinstance(node, ast.ImportFrom):
-                    if node.module in ["shutil", "subprocess"]:
+                if isinstance(node, ast.ImportFrom) and node.module in ["shutil", "subprocess"]:
                         return {
                             "success": False,
                             "error": f"Illegal import detected: {node.module}",

@@ -23,7 +23,6 @@ export function SettingsPage() {
 	};
 
 	const handleSave = () => {
-		console.log("Saving settings...", settings);
 		// TODO: Connect to backend endpoint
 	};
 

@@ -91,8 +91,7 @@ class ContextEngine:
             for node in nodes:
                 if tag == "docstring":
                     parent = node.parent
-                    if parent and parent.type in ["module", "block"]:
-                        if parent.children and parent.children[0] == node:
+                    if parent and parent.type in ["module", "block"] and parent.children and parent.children[0] == node:
                             to_remove.append((node.start_byte, node.end_byte))
                 else:
                     to_remove.append((node.start_byte, node.end_byte))
