@@ -352,7 +352,7 @@ class ToolRegistry:
                         if (Path(t.module_path) or Path()).parent.name == cat
                     ]
                 )
-                for cat in self.categories.keys()
+                for cat in self.categories
             },
             "recent_events": self.adaptation_log[-10:] if self.adaptation_log else [],
         }

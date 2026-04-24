@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from modules.base_tools import BaseTools
 from modules.sandbox import WorkspaceGuard

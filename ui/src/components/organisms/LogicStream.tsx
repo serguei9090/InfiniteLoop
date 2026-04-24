@@ -8,7 +8,7 @@ export function LogicStream({ thoughts }: { thoughts: string[] }) {
 		if (containerRef.current) {
 			containerRef.current.scrollTop = containerRef.current.scrollHeight;
 		}
-	}, [thoughts]);
+	}, []);
 
 	return (
 		<div className="h-full glass-panel flex flex-col overflow-hidden border-slate-200">

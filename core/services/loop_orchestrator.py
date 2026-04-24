@@ -144,7 +144,6 @@ TERMINATION: Output "TASK_COMPLETE" when finished.
 
             full_response += chunk
 
-        print(f"\n--- MISSION OUTPUT ---\n{full_response}\n--- Step Complete ---")
 
         # Add response to history
         if not full_response.strip():
@@ -180,7 +179,6 @@ TERMINATION: Output "TASK_COMPLETE" when finished.
             "status", {"state": "Executing Tool", "retry": self.retry_count}
         )
         result = await self.tool_engine.execute(content)
-        print(f"--- TOOL RESULT ---\n{result}\n-------------------")
 
         if result["success"]:
             self.retry_count = 0  # Reset retry on success

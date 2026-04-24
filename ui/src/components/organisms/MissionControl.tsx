@@ -17,7 +17,7 @@ export function MissionControl({
 
 	useEffect(() => {
 		endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages, isThinking]);
+	}, []);
 
 	const handleSend = () => {
 		if (!input.trim()) return;

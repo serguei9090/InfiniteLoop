@@ -343,8 +343,7 @@ class AutoAdaptationEngine:
 
             # Find run or main function
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    if node.name in ("run", "main"):
+                if isinstance(node, ast.FunctionDef) and node.name in ("run", "main"):
                         # Extract function code
                         lines = code.split("\n")
                         start = node.lineno - 1

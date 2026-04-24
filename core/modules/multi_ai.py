@@ -16,7 +16,7 @@ class MultiAIManager:
         self.providers: Dict[str, AIProvider] = {
             "gemini": AIProvider(
                 name="gemini",
-                url=os.environ.get("google_api", "https://generativelanguage.googleapis.com/v1beta"),
+                url=os.environ.get("GOOGLE_API", "https://generativelanguage.googleapis.com/v1beta"),
                 api_key=os.environ.get("GEMINI_API_KEY", ""),
                 categories=["coding", "chat"]
             ),
