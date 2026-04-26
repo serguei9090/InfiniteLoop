@@ -144,7 +144,6 @@ TERMINATION: Output "TASK_COMPLETE" when finished.
 
             full_response += chunk
 
-
         # Add response to history
         if not full_response.strip():
             self.silent_retries += 1

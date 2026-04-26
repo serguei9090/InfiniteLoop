@@ -71,28 +71,36 @@ class ContextEngine:
         elif suffix in [".ts", ".tsx"]:
             self.parser.language = self.ts_lang
             return self._compress_typescript(content)
-        
+
         return content
 
     def _compress_python(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
         root = tree.root_node
-        
-        query = Query(self.py_lang, """
+
+        query = Query(
+            self.py_lang,
+            """
             (expression_statement (string)) @docstring
             (comment) @comment
-        """)
-        
+        """,
+        )
+
         cursor = QueryCursor(query)
         captures = cursor.captures(root)
-        
+
         to_remove = []
         for tag, nodes in captures.items():
             for node in nodes:
                 if tag == "docstring":
                     parent = node.parent
-                    if parent and parent.type in ["module", "block"] and parent.children and parent.children[0] == node:
-                            to_remove.append((node.start_byte, node.end_byte))
+                    if (
+                        parent
+                        and parent.type in ["module", "block"]
+                        and parent.children
+                        and parent.children[0] == node
+                    ):
+                        to_remove.append((node.start_byte, node.end_byte))
                 else:
                     to_remove.append((node.start_byte, node.end_byte))
 
@@ -100,17 +108,20 @@ class ContextEngine:
 
     def _compress_typescript(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.ts_lang, """
+        query = Query(
+            self.ts_lang,
+            """
             (comment) @comment
-        """)
+        """,
+        )
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)
-        
+
         to_remove = []
         for nodes in captures.values():
             for node in nodes:
                 to_remove.append((node.start_byte, node.end_byte))
-        
+
         return self._remove_ranges(content, to_remove)
 
     def _remove_ranges(self, content: str, ranges: List[tuple]) -> str:
@@ -118,27 +129,30 @@ class ContextEngine:
         result = bytearray(content, "utf8")
         for start, end in sorted_ranges:
             del result[start:end]
-        
+
         text = result.decode("utf8")
         lines = [line for line in text.splitlines() if line.strip()]
         return "\n".join(lines)
 
     def _parse_python_skeleton(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.py_lang, """
+        query = Query(
+            self.py_lang,
+            """
             (class_definition name: (identifier) @class.name)
             (function_definition name: (identifier) @func.name)
-        """)
+        """,
+        )
 
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)
         skeleton = []
-        
+
         # We need to preserve order if possible, but the dict loses it.
         # However, for skeleton it's okay for now.
         for tag, nodes in captures.items():
             for node in nodes:
-                name = node.text.decode('utf8')
+                name = node.text.decode("utf8")
                 if tag == "class.name":
                     skeleton.append(f"class {name}:")
                 elif tag == "func.name":
@@ -155,20 +169,23 @@ class ContextEngine:
 
     def _parse_typescript_skeleton(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.ts_lang, """
+        query = Query(
+            self.ts_lang,
+            """
             (class_declaration name: (type_identifier) @class.name)
             (function_declaration name: (identifier) @func.name)
             (method_definition name: (property_identifier) @method.name)
             (interface_declaration name: (type_identifier) @interface.name)
-        """)
+        """,
+        )
 
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)
         skeleton = []
-        
+
         for tag, nodes in captures.items():
             for node in nodes:
-                name = node.text.decode('utf8')
+                name = node.text.decode("utf8")
                 if tag == "class.name":
                     skeleton.append(f"class {name} {{...}}")
                 elif tag == "func.name":
@@ -182,7 +199,9 @@ class ContextEngine:
 
     def _parse_html_skeleton(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.html_lang, """
+        query = Query(
+            self.html_lang,
+            """
             (element
                 (start_tag
                     (tag_name) @tag.name
@@ -190,7 +209,8 @@ class ContextEngine:
                         (attribute_name) @attr.name
                         (quoted_attribute_value) @attr.value))
                 (#match? @attr.name "id|class"))
-        """)
+        """,
+        )
 
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)
@@ -204,10 +224,13 @@ class ContextEngine:
 
     def _parse_css_skeleton(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.css_lang, """
+        query = Query(
+            self.css_lang,
+            """
             (rule_set
                 (selectors) @selectors)
-        """)
+        """,
+        )
 
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)
@@ -219,9 +242,12 @@ class ContextEngine:
 
     def _parse_markdown_skeleton(self, content: str) -> str:
         tree = self.parser.parse(bytes(content, "utf8"))
-        query = Query(self.md_lang, """
+        query = Query(
+            self.md_lang,
+            """
             (atx_heading) @heading
-        """)
+        """,
+        )
 
         cursor = QueryCursor(query)
         captures = cursor.captures(tree.root_node)

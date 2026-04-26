@@ -285,13 +285,14 @@ class ToolRegistry:
         async with self._lock:
             if name in self._tools:
                 self._tools[name].enabled = True
-                self.adaptation_log.append({
-                    "event": "tool_enabled",
-                    "name": name,
-                    "timestamp": time.time()
-                })
+                self.adaptation_log.append(
+                    {"event": "tool_enabled", "name": name, "timestamp": time.time()}
+                )
                 logger.info(f"Enabled tool: {name}")
-                return {"success": True, "message": f"Tool '{name}' enabled successfully"}
+                return {
+                    "success": True,
+                    "message": f"Tool '{name}' enabled successfully",
+                }
             return {"success": False, "error": f"Tool '{name}' not found"}
 
     async def disable_tool(self, name: str) -> Dict[str, Any]:
@@ -299,13 +300,14 @@ class ToolRegistry:
         async with self._lock:
             if name in self._tools:
                 self._tools[name].enabled = False
-                self.adaptation_log.append({
-                    "event": "tool_disabled",
-                    "name": name,
-                    "timestamp": time.time()
-                })
+                self.adaptation_log.append(
+                    {"event": "tool_disabled", "name": name, "timestamp": time.time()}
+                )
                 logger.info(f"Disabled tool: {name}")
-                return {"success": True, "message": f"Tool '{name}' disabled successfully"}
+                return {
+                    "success": True,
+                    "message": f"Tool '{name}' disabled successfully",
+                }
             return {"success": False, "error": f"Tool '{name}' not found"}
 
     async def remove_tool(self, name: str) -> Dict[str, Any]:

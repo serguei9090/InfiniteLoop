@@ -222,6 +222,48 @@ async def stop_task():
     }
 
 
+# ==================== AUTONOMOUS LOOP ====================
+
+
+@app.post("/task/autonomous/start")
+async def start_autonomous_loop(background_tasks: BackgroundTasks):
+    """Start the autonomous infinite loop."""
+    if orchestrator.autonomous_loop_active:
+        return {
+            "success": False,
+            "data": None,
+            "error": "Autonomous loop is already running",
+        }
+
+    # Emit status start
+    await ui_callback(
+        "running",
+        {
+            "task": "Autonomous Loop (Beads Tracker)",
+        },
+    )
+
+    # Run loop in background
+    background_tasks.add_task(orchestrator.run_autonomous_loop)
+
+    return {
+        "success": True,
+        "data": {"message": "Autonomous loop started"},
+        "error": None,
+    }
+
+
+@app.post("/task/autonomous/stop")
+async def stop_autonomous_loop():
+    """Stop the autonomous infinite loop."""
+    orchestrator.stop_autonomous_loop()
+    return {
+        "success": True,
+        "data": {"message": "Autonomous loop stopping requested"},
+        "error": None,
+    }
+
+
 # ==================== TOOL MANAGEMENT ====================
 
 
@@ -399,7 +441,6 @@ async def websocket_endpoint(websocket: WebSocket):
 # ==================== DASHBOARD ROUTER ====================
 
 
-
 @app.post("/api/mock-ai/chat/completions")
 async def mock_ai_completion():
     return {
@@ -407,20 +448,19 @@ async def mock_ai_completion():
         "object": "chat.completion",
         "created": 1677652288,
         "model": "mock-model",
-        "choices": [{
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": "This is a mock AI response. TASK_COMPLETE"
-            },
-            "finish_reason": "stop"
-        }],
-        "usage": {
-            "prompt_tokens": 9,
-            "completion_tokens": 12,
-            "total_tokens": 21
-        }
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "This is a mock AI response. TASK_COMPLETE",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 9, "completion_tokens": 12, "total_tokens": 21},
     }
+
 
 app.include_router(dashboard_router)
 

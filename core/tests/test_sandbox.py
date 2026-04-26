@@ -24,7 +24,9 @@ def test_sandbox_write_safe(sandbox):
 
 def test_sandbox_traversal_attack(sandbox):
     """Verify that traversal above root is blocked."""
-    with pytest.raises(PermissionError, match="Security Alert: Path traversal detected"):
+    with pytest.raises(
+        PermissionError, match="Security Alert: Path traversal detected"
+    ):
         sandbox.secure_path("../secret.txt")
 
 
