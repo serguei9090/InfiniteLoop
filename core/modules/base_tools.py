@@ -166,6 +166,7 @@ class BaseTools:
         """
         try:
             import glob
+
             # Only search within the workspace root
             search_path = str(self.guard.root / pattern)
             results = glob.glob(search_path, recursive=True)
@@ -183,7 +184,7 @@ class BaseTools:
             safe_path = self.guard.secure_path(path, write=False)
             if platform.system() == "Windows":
                 # PowerShell Select-String
-                cmd = f'powershell.exe -Command "Get-ChildItem -Path \'{safe_path}\' -Recurse -File | Select-String -Pattern \'{query}\'"'
+                cmd = f"powershell.exe -Command \"Get-ChildItem -Path '{safe_path}' -Recurse -File | Select-String -Pattern '{query}'\""
             else:
                 # Unix grep
                 cmd = f'grep -rn "{query}" "{safe_path}"'
@@ -210,6 +211,7 @@ class BaseTools:
         """
         try:
             import httpx
+
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, follow_redirects=True, timeout=10.0)
                 response.raise_for_status()

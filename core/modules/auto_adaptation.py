@@ -344,27 +344,26 @@ class AutoAdaptationEngine:
             # Find run or main function
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef) and node.name in ("run", "main"):
-                        # Extract function code
-                        lines = code.split("\n")
-                        start = node.lineno - 1
+                    # Extract function code
+                    lines = code.split("\n")
+                    start = node.lineno - 1
 
-                        # Find end of function (matching indentation)
-                        indent_level = len(lines[start]) - len(lines[start].lstrip())
-                        end = start + 1
+                    # Find end of function (matching indentation)
+                    indent_level = len(lines[start]) - len(lines[start].lstrip())
+                    end = start + 1
 
-                        for i in range(start + 1, len(lines)):
-                            if (
-                                lines[i].strip()
-                                and len(lines[i]) - len(lines[i].lstrip())
-                                <= indent_level
-                            ):
-                                break
-                            end = i + 1
+                    for i in range(start + 1, len(lines)):
+                        if (
+                            lines[i].strip()
+                            and len(lines[i]) - len(lines[i].lstrip()) <= indent_level
+                        ):
+                            break
+                        end = i + 1
 
-                        # Format as function
-                        func_lines = lines[start:end]
+                    # Format as function
+                    func_lines = lines[start:end]
 
-                        return "\n".join(func_lines)
+                    return "\n".join(func_lines)
 
             return None
 

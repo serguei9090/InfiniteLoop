@@ -5,51 +5,55 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
+
 class AIProvider(BaseModel):
     name: str
     url: str
     api_key: str
-    categories: List[str] # coding, chat, handoff
+    categories: List[str]  # coding, chat, handoff
+
 
 class MultiAIManager:
     def __init__(self):
         self.providers: Dict[str, AIProvider] = {
             "gemini": AIProvider(
                 name="gemini",
-                url=os.environ.get("GOOGLE_API", "https://generativelanguage.googleapis.com/v1beta"),
+                url=os.environ.get(
+                    "GOOGLE_API", "https://generativelanguage.googleapis.com/v1beta"
+                ),
                 api_key=os.environ.get("GEMINI_API_KEY", ""),
-                categories=["coding", "chat"]
+                categories=["coding", "chat"],
             ),
             "codex": AIProvider(
                 name="codex",
                 url="http://localhost:8001/v1",
                 api_key="codex",
-                categories=["coding"]
+                categories=["coding"],
             ),
             "qwen": AIProvider(
                 name="qwen",
                 url="http://localhost:8002/v1",
                 api_key="qwen",
-                categories=["chat", "handoff"]
+                categories=["chat", "handoff"],
             ),
             "jules": AIProvider(
                 name="jules",
                 url="http://localhost:8003/v1",
                 api_key="jules",
-                categories=["coding", "chat"]
+                categories=["coding", "chat"],
             ),
             "local": AIProvider(
                 name="local",
                 url="http://127.0.0.1:1234/v1",
                 api_key="lm-studio",
-                categories=["coding", "chat", "handoff"]
+                categories=["coding", "chat", "handoff"],
             ),
             "mock": AIProvider(
                 name="mock",
                 url="http://localhost:8000/api/mock-ai",
                 api_key="mock",
-                categories=["coding", "chat", "handoff"]
-            )
+                categories=["coding", "chat", "handoff"],
+            ),
         }
         self.primary_provider = "local"
         self.backup_provider = "gemini"
@@ -69,5 +73,7 @@ class MultiAIManager:
             logger.info(f"Routing task to {provider.name} for category {category}")
             return provider
 
-        logger.warning(f"No provider found for category {category}, falling back to {self.primary_provider}")
+        logger.warning(
+            f"No provider found for category {category}, falling back to {self.primary_provider}"
+        )
         return self.providers[self.primary_provider]

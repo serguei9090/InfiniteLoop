@@ -18,7 +18,9 @@ export function FloatingMenu() {
 						to={to}
 						className={({ isActive }) =>
 							`flex flex-col items-center gap-1 transition-colors ${
-								isActive ? "text-accent" : "text-slate-500 hover:text-accent-dark"
+								isActive
+									? "text-accent"
+									: "text-slate-500 hover:text-accent-dark"
 							}`
 						}
 					>
