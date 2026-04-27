@@ -221,9 +221,8 @@ TERMINATION: Output "TASK_COMPLETE" when finished.
                 )
 
     def _calculate_input_tokens(self) -> int:
-        # Simplified tokenization: ~4 chars per token
-        total_chars = sum(len(m["content"]) for m in self.context.get_messages())
-        return int(total_chars / 4)
+        # Utilize ContextManager's internally cached token count
+        return self.context.get_context_stats().get("token_estimate", 0)
 
     async def _stream_adapter(
         self, stream: AsyncGenerator[Dict, None]
