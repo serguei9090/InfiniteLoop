@@ -1,6 +1,7 @@
 import os
 import logging
 from typing import Dict, List, Optional
+from config import settings
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class MultiAIManager:
             ),
             "local": AIProvider(
                 name="local",
-                url="http://127.0.0.1:1234/v1",
+                url=settings.llm_base_url,
                 api_key="lm-studio",
                 categories=["coding", "chat", "handoff"],
             ),

@@ -41,6 +41,14 @@ class BaseTools:
                 "data": result.get("message", ""),
                 "error": result.get("error"),
             }
+        except FileNotFoundError as e:
+            return {"success": False, "data": "", "error": f"File not found: {str(e)}"}
+        except IOError as e:
+            return {"success": False, "data": "", "error": f"IO Error reading file: {str(e)}"}
+        except FileNotFoundError as e:
+            return {"success": False, "data": "", "error": f"Command not found: {str(e)}"}
+        except asyncio.TimeoutError:
+            return {"success": False, "data": "", "error": "Command execution timed out."}
         except Exception as e:
             return {"success": False, "data": "", "error": str(e)}
 

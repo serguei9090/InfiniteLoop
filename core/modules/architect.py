@@ -1,3 +1,4 @@
+from config import settings
 from pydantic import BaseModel, Field
 from typing import List
 from pydantic_ai import Agent
@@ -22,8 +23,8 @@ class MissionPlan(BaseModel):
     )
 
 
-os.environ["OPENAI_API_KEY"] = "test"
-os.environ["OPENAI_BASE_URL"] = "http://127.0.0.1:4000/v1"
+os.environ["OPENAI_API_KEY"] = settings.architect_api_key
+os.environ["OPENAI_BASE_URL"] = settings.architect_base_url
 
 # In pydantic_ai 0.18.5+ result_type is passed as a type hint or parameter to run()
 architect_agent = Agent(

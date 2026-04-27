@@ -3,6 +3,7 @@ import os
 from typing import Dict, Any, List
 
 from smolagents import Tool, CodeAgent, LiteLLMModel
+from config import settings
 from modules.base_tools import BaseTools
 
 logger = logging.getLogger(__name__)
@@ -16,8 +17,8 @@ class SmolAgentWrapper:
         self.workspace_root = workspace_root
 
         # Configure model to use our litellm proxy
-        proxy_url = os.environ.get("LITELLM_PROXY_URL", "http://127.0.0.1:4000/v1")
-        api_key = os.environ.get("LITELLM_API_KEY", "test")
+        proxy_url = os.environ.get("LITELLM_PROXY_URL", settings.litellm_proxy_url)
+        api_key = os.environ.get("LITELLM_API_KEY", settings.litellm_api_key)
 
         self.model = LiteLLMModel(
             model_id="gemini/gemma-3-27b-it",  # routed through proxy
