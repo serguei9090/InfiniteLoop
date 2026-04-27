@@ -8,17 +8,19 @@ CONTRACT:
 
 from typing import AsyncGenerator, List, Dict, Optional
 from openai import AsyncOpenAI
-
+from config import settings
 
 class LLMBridge:
     def __init__(
         self,
-        base_url: str = "http://127.0.0.1:1234/v1",
-        api_key: str = "lm-studio",
-        model: str = "qwen/qwen3.5-9b",
+        base_url: str = None,
+        api_key: str = None,
+        model: str = None,
     ):
-        self.client = AsyncOpenAI(base_url=base_url, api_key=api_key)
-        self.model = model
+        self.base_url = base_url or settings.llm_base_url
+        self.api_key = api_key or settings.llm_api_key
+        self.model = model or settings.llm_model
+        self.client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
     async def chat_stream(
         self,
